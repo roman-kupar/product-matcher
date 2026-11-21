@@ -1,14 +1,15 @@
 import React, { useState } from 'react'
-import { Card, Space, Typography, Table, Tag, Row, Col, Divider, Button } from 'antd'
+import { Card, Space, Typography, Table, Tag, Row, Col, Divider, Button, message, Switch } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { ThunderboltOutlined, SwapOutlined } from '@ant-design/icons'
+import { ThunderboltOutlined, SwapOutlined, TableOutlined } from '@ant-design/icons'
 import {
   EquivalenceBadge,
   ArticleSummaryCard,
   EnrichmentAuditTimeline,
+  AttributeDiffTable,
   type EquivalenceStatus,
 } from './components'
-import type { NormalizedArticle, AuditLogEntry } from './types'
+import type { NormalizedArticle, AuditLogEntry, AttributeComparisonRow } from './types'
 
 const { Title, Text, Paragraph } = Typography
 
@@ -135,11 +136,75 @@ const SAMPLE_AUDIT_EVENTS: AuditLogEntry[] = [
   },
 ]
 
+const SAMPLE_ATTRIBUTE_COMPARISON: AttributeComparisonRow[] = [
+  {
+    key: 'size_nominal',
+    label: 'Glove Size (Nominal)',
+    dataType: 'STRING',
+    hospitalValue: '7.5 (Medium-Large)',
+    supplierValue: '7.5 (Medium-Large)',
+    status: 'EXACT_MATCH',
+    isClinicalDealbreaker: true,
+    llmNote: 'Exact dimensional match verified across both specifications.',
+  },
+  {
+    key: 'material_composition',
+    label: 'Material Composition',
+    dataType: 'ENUM',
+    enumOptions: ['Natural Rubber Latex', 'Nitrile', 'Neoprene', 'Polyisoprene'],
+    hospitalValue: 'Natural Rubber Latex (Low Protein)',
+    supplierValue: 'Natural Rubber Latex (Low Protein)',
+    previousSupplierValue: 'Natural Rubber Latex',
+    status: 'EXACT_MATCH',
+    isClinicalDealbreaker: true,
+    llmNote: 'Supplier submitted low protein certification (<50 µg/g per EN 455-3).',
+    enrichmentSource: 'SUPPLIER_RESPONSE',
+    updatedBySupplier: true,
+  },
+  {
+    key: 'sterility_status',
+    label: 'Sterility & Method',
+    dataType: 'ENUM',
+    enumOptions: ['Sterile Gamma', 'Sterile EtO', 'Non-Sterile'],
+    hospitalValue: 'Sterile Gamma Radiation (EN 556-1)',
+    supplierValue: null,
+    status: 'MISSING_DATA',
+    isClinicalDealbreaker: true,
+    llmNote: 'Supplier catalog does not explicitly state sterilization protocol. Clarification required.',
+  },
+  {
+    key: 'cuff_thickness',
+    label: 'Cuff Thickness',
+    dataType: 'NUMBER_WITH_UNIT',
+    unit: 'mm',
+    hospitalValue: 0.22,
+    supplierValue: 0.20,
+    status: 'SOFT_MISMATCH',
+    isClinicalDealbreaker: false,
+    llmNote: 'Minor 0.02mm variance within clinical tolerance of ±0.03mm (ASTM D3577).',
+  },
+  {
+    key: 'powder_content',
+    label: 'Powder Status',
+    dataType: 'BOOLEAN',
+    hospitalValue: false,
+    supplierValue: true,
+    status: 'CLINICAL_CONFLICT',
+    isClinicalDealbreaker: true,
+    llmNote: 'Hospital requires 100% Powder-Free for OR surgical use; candidate is Lightly Powdered.',
+  },
+]
+
 const App: React.FC = () => {
   const [data, setData] = useState<TriageItem[]>(INITIAL_TRIAGE_DATA)
   const [selectedKey, setSelectedKey] = useState<string>('1')
 
   const selectedItem = data.find((item) => item.key === selectedKey) ?? data[0]
+  const [isReadOnlyDiff, setIsReadOnlyDiff] = useState(false)
+
+  const handleSelectMissing = (attr: AttributeComparisonRow) => {
+    message.info(`Dispatched inquiry to supplier for attribute: ${attr.label}`)
+  }
 
   const columns: ColumnsType<TriageItem> = [
     {
@@ -330,6 +395,37 @@ const App: React.FC = () => {
               />
             </Col>
           </Row>
+        </Card>
+
+        {/* Attribute Comparison Grid (The Engine) */}
+        <Card
+          title={
+            <Space align="center">
+              <TableOutlined />
+              <span>Attribute Diff & Clinical Specification Grid</span>
+              <Tag color="geekblue">5 Attributes Evaluated</Tag>
+            </Space>
+          }
+          extra={
+            <Space align="center">
+              <Text type="secondary" style={{ fontSize: 12 }}>Supplier Read-Only Mode:</Text>
+              <Switch
+                size="small"
+                checked={isReadOnlyDiff}
+                onChange={setIsReadOnlyDiff}
+              />
+            </Space>
+          }
+          size="small"
+        >
+          <Paragraph type="secondary" style={{ marginBottom: 14 }}>
+            Row-by-row alignment between hospital requirements and supplier catalog attributes, color-coding match states (Exact Match, Missing Data, Soft Mismatch, Clinical Conflict) with clinical dealbreaker indicators.
+          </Paragraph>
+          <AttributeDiffTable
+            attributes={SAMPLE_ATTRIBUTE_COMPARISON}
+            readOnly={isReadOnlyDiff}
+            onSelectMissing={handleSelectMissing}
+          />
         </Card>
 
         {/* Supplier Response Screen Reference Spec Preview */}

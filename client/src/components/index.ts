@@ -6,3 +6,6 @@ export type { ArticleSummaryCardProps } from './ArticleSummaryCard'
 
 export { EnrichmentAuditTimeline } from './EnrichmentAuditTimeline'
 export type { EnrichmentAuditTimelineProps } from './EnrichmentAuditTimeline'
+
+export { AttributeDiffTable } from './AttributeDiffTable'
+export type { AttributeDiffTableProps } from './AttributeDiffTable'
