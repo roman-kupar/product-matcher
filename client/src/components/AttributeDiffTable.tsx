@@ -11,6 +11,7 @@ import {
   ArrowRightOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons'
+import { DeltaHighlightWrapper } from './DeltaHighlightWrapper'
 import type { AttributeComparisonRow, MatchStatus } from '../types'
 
 const { Text, Paragraph } = Typography
@@ -117,35 +118,39 @@ export const AttributeDiffTable: React.FC<AttributeDiffTableProps> = ({
     {
       title: 'Supplier Candidate Spec',
       key: 'supplierValue',
-      width: 240,
+      width: 260,
       render: (_, record) => {
         const hasUpdate =
           record.previousSupplierValue !== undefined &&
           record.previousSupplierValue !== null &&
           record.previousSupplierValue !== record.supplierValue
 
-        return (
-          <div>
-            <div style={{ background: '#fafafa', border: '1px solid #f0f0f0', padding: '6px 10px', borderRadius: 4, display: 'inline-block', minWidth: 140 }}>
-              {hasUpdate ? (
-                <Space align="center" size={6} wrap>
-                  <Text delete type="secondary" style={{ fontSize: 11 }}>
-                    {formatValue(record.previousSupplierValue, record.unit)}
-                  </Text>
-                  <ArrowRightOutlined style={{ fontSize: 10, color: '#8c8c8c' }} />
-                  <span style={{ fontWeight: 600 }}>{formatValue(record.supplierValue, record.unit)}</span>
-                  <Tag color="green" style={{ margin: 0, fontSize: 10, padding: '0 4px' }}>Updated</Tag>
-                </Space>
-              ) : (
-                formatValue(record.supplierValue, record.unit)
-              )}
-            </div>
-            {record.enrichmentSource === 'SUPPLIER_RESPONSE' && (
-              <div style={{ marginTop: 2 }}>
-                <Tag color="purple" style={{ margin: 0, fontSize: 10 }}>Supplier Verified</Tag>
-              </div>
+        const isNewlyEnriched = Boolean(record.updatedBySupplier || hasUpdate)
+
+        const innerContent = (
+          <div style={{ background: '#fafafa', border: '1px solid #f0f0f0', padding: '6px 10px', borderRadius: 4, display: 'inline-block', minWidth: 140 }}>
+            {hasUpdate ? (
+              <Space align="center" size={6} wrap>
+                <Text delete type="secondary" style={{ fontSize: 11 }}>
+                  {formatValue(record.previousSupplierValue, record.unit)}
+                </Text>
+                <ArrowRightOutlined style={{ fontSize: 10, color: '#8c8c8c' }} />
+                <span style={{ fontWeight: 600 }}>{formatValue(record.supplierValue, record.unit)}</span>
+              </Space>
+            ) : (
+              formatValue(record.supplierValue, record.unit)
             )}
           </div>
+        )
+
+        return (
+          <DeltaHighlightWrapper
+            isUpdated={isNewlyEnriched}
+            previousValue={record.previousSupplierValue ? String(record.previousSupplierValue) : undefined}
+            label="Newly Enriched"
+          >
+            {innerContent}
+          </DeltaHighlightWrapper>
         )
       },
     },

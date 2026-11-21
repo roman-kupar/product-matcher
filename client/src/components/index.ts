@@ -17,3 +17,6 @@ export { ClarificationPacketBuilder, ClarificationRequestForm } from './Clarific
 export type { ClarificationPacketBuilderProps } from './ClarificationPacketBuilder'
 
 export { MasterDetailTriageLayout } from './MasterDetailTriageLayout'
+
+export { DeltaHighlightWrapper } from './DeltaHighlightWrapper'
+export type { DeltaHighlightWrapperProps } from './DeltaHighlightWrapper'

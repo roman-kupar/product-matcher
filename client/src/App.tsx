@@ -9,6 +9,7 @@ import {
   DynamicAttributeInput,
   ClarificationPacketBuilder,
   MasterDetailTriageLayout,
+  DeltaHighlightWrapper,
   type EquivalenceStatus,
 } from './components'
 import type {
@@ -402,10 +403,12 @@ const App: React.FC = () => {
         </header>
 
         {/* Status Palette Showcase */}
-        <Card title="<EquivalenceBadge /> States & Variations" size="small">
+        <Card title="<EquivalenceBadge /> States & Variations (with <DeltaHighlightWrapper />)" size="small">
           <Space orientation="horizontal" size={[12, 12]} wrap>
             <EquivalenceBadge status="MATCHED" score={96} deltaScore={18} />
-            <EquivalenceBadge status="RE_EVALUATED" score={85} deltaScore={12} />
+            <DeltaHighlightWrapper isUpdated={true} inline={true} label="Newly Enriched" previousValue="72%">
+              <EquivalenceBadge status="RE_EVALUATED" score={85} deltaScore={12} />
+            </DeltaHighlightWrapper>
             <EquivalenceBadge status="NEEDS_INFO" score={62} />
             <EquivalenceBadge status="AWAITING_SUPPLIER" score={70} />
             <EquivalenceBadge status="CONFLICT" score={41} deltaScore={-14} />
@@ -458,7 +461,14 @@ const App: React.FC = () => {
                     <Text type="secondary" style={{ fontSize: 11 }}>INSPECTION WORKSPACE • {item.articleId}</Text>
                     <Title level={4} style={{ margin: '2px 0 0 0' }}>{item.buyerArticle}</Title>
                   </div>
-                  <EquivalenceBadge status={item.status} score={item.score} deltaScore={item.deltaScore} size="middle" />
+                  <DeltaHighlightWrapper
+                    isUpdated={item.status === 'RE_EVALUATED'}
+                    inline={true}
+                    label="Newly Enriched"
+                    previousValue="62%"
+                  >
+                    <EquivalenceBadge status={item.status} score={item.score} deltaScore={item.deltaScore} size="middle" />
+                  </DeltaHighlightWrapper>
                 </div>
 
                 <Divider style={{ margin: '8px 0' }} />
