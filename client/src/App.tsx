@@ -1,8 +1,14 @@
 import React, { useState } from 'react'
 import { Card, Space, Typography, Table, Tag, Row, Col, Divider, Button } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { ThunderboltOutlined } from '@ant-design/icons'
-import { EquivalenceBadge, type EquivalenceStatus } from './components'
+import { ThunderboltOutlined, SwapOutlined } from '@ant-design/icons'
+import {
+  EquivalenceBadge,
+  ArticleSummaryCard,
+  EnrichmentAuditTimeline,
+  type EquivalenceStatus,
+} from './components'
+import type { NormalizedArticle, AuditLogEntry } from './types'
 
 const { Title, Text, Paragraph } = Typography
 
@@ -59,6 +65,73 @@ const INITIAL_TRIAGE_DATA: TriageItem[] = [
     supplierArticle: 'Deep Groove Ball Bearing 6204-ZZ',
     status: 'AWAITING_SUPPLIER',
     score: 71,
+  },
+]
+
+const SAMPLE_HOSPITAL_ARTICLE: NormalizedArticle = {
+  id: 'HOSP-10042',
+  title: 'Surgical Gloves Powder-Free Sterile Size 7.5 Latex',
+  sku: 'SG-75-LAT-PF',
+  gtin: '04012345678901',
+  manufacturer: 'Hartmann MedTech AG',
+  packagingUnit: 'Box of 50 pairs',
+}
+
+const SAMPLE_SUPPLIER_ARTICLE: NormalizedArticle = {
+  id: 'SUPP-9921',
+  title: 'Peha-soft Powder-Free Surgical Latex Gloves Sz 7.5',
+  sku: '942204-PF',
+  gtin: '04012345678901',
+  manufacturer: 'Hartmann MedTech AG',
+  packagingUnit: 'Box of 50 pairs (dispenser carton)',
+}
+
+const SAMPLE_AUDIT_EVENTS: AuditLogEntry[] = [
+  {
+    id: 'evt-1',
+    timestamp: '2026-11-20 09:14',
+    type: 'INITIAL_SCAN',
+    title: 'Initial LLM Extraction & Matching',
+    actor: { name: 'Gemini Pipeline v2.4', role: 'LLM' },
+    summary: 'Catalog cross-reference completed. Candidate match identified with score 62% (status: NEEDS_INFO due to missing sterility standard).',
+    fieldChanges: [
+      { field: 'Equivalence Score', newValue: '62%' },
+      { field: 'Equivalence Status', newValue: 'NEEDS_INFO' },
+    ],
+  },
+  {
+    id: 'evt-2',
+    timestamp: '2026-11-20 11:30',
+    type: 'QUESTIONS_SENT',
+    title: 'Clarification Questionnaire Dispatched',
+    actor: { name: 'Sarah L. (Procurement Lead)', role: 'BUYER' },
+    summary: 'Automated questionnaire sent to supplier requesting EN 455 sterile certification and exact carton packaging units.',
+  },
+  {
+    id: 'evt-3',
+    timestamp: '2026-11-21 08:45',
+    type: 'SUPPLIER_ANSWERED',
+    title: 'Supplier Specification Submission',
+    actor: { name: 'Hartmann MedTech Rep (Klaus V.)', role: 'SUPPLIER' },
+    summary: 'Supplier confirmed sterile gamma radiation certification and updated packaging hierarchy.',
+    fieldChanges: [
+      { field: 'Packaging Unit', previousValue: 'Box of 50', newValue: 'Box of 50 pairs (dispenser carton)' },
+      { field: 'Sterility Standard', previousValue: 'Unspecified', newValue: 'EN 455-1/-2 Sterile Gamma' },
+    ],
+  },
+  {
+    id: 'evt-4',
+    timestamp: '2026-11-21 08:46',
+    type: 'LLM_RE_EVALUATED',
+    title: 'Automated Re-evaluation & Verification',
+    actor: { name: 'Gemini Pipeline v2.4', role: 'LLM' },
+    summary: 'Extracted attributes verified against hospital master spec. Match confidence escalated to 96% with full equivalence verified.',
+    fieldChanges: [
+      { field: 'Equivalence Score', previousValue: '62%', newValue: '96%' },
+      { field: 'Score Delta', newValue: '+34%' },
+      { field: 'Equivalence Status', previousValue: 'NEEDS_INFO', newValue: 'MATCHED' },
+    ],
+    notes: 'All mandatory hospital clinical requirements satisfied.',
   },
 ]
 
@@ -230,6 +303,67 @@ const App: React.FC = () => {
             </Card>
           </Col>
         </Row>
+
+        {/* Side-by-Side Buyer Comparison View */}
+        <Card
+          title={
+            <Space align="center">
+              <span>Buyer Comparison View (Side-by-Side Header)</span>
+              <EquivalenceBadge status="MATCHED" score={96} deltaScore={18} size="small" />
+            </Space>
+          }
+          size="small"
+        >
+          <Row gutter={[16, 16]} align="stretch">
+            <Col xs={24} md={12}>
+              <ArticleSummaryCard
+                article={SAMPLE_HOSPITAL_ARTICLE}
+                sourceType="HOSPITAL"
+                extra={<Tag color="blue">Internal Master</Tag>}
+              />
+            </Col>
+            <Col xs={24} md={12}>
+              <ArticleSummaryCard
+                article={SAMPLE_SUPPLIER_ARTICLE}
+                sourceType="SUPPLIER"
+                extra={<Tag color="purple">Suggested Match</Tag>}
+              />
+            </Col>
+          </Row>
+        </Card>
+
+        {/* Supplier Response Screen Reference Spec Preview */}
+        <Card title="Supplier Response Screen (Reference Spec Card)" size="small">
+          <Paragraph type="secondary" style={{ marginBottom: 12 }}>
+            Displayed at the top of the supplier task interface so suppliers know exactly which hospital specification they are reviewing.
+          </Paragraph>
+          <ArticleSummaryCard
+            article={SAMPLE_HOSPITAL_ARTICLE}
+            sourceType="HOSPITAL"
+            compact={true}
+            extra={
+              <Button size="small" icon={<SwapOutlined />}>
+                Suggest Alternative
+              </Button>
+            }
+          />
+        </Card>
+
+        {/* Enrichment Audit Timeline Showcase */}
+        <Card
+          title={
+            <Space align="center">
+              <span>Lifecycle Audit Trail (<EquivalenceBadge status="MATCHED" score={96} size="small" />)</span>
+              <Tag color="green">4 Events Recorded</Tag>
+            </Space>
+          }
+          size="small"
+        >
+          <Paragraph type="secondary" style={{ marginBottom: 16 }}>
+            Transparent timeline tracking every automated and human lifecycle stage (Initial LLM Scan → Questions Sent → Supplier Answered → LLM Re-evaluated), logging who changed which field and when.
+          </Paragraph>
+          <EnrichmentAuditTimeline events={SAMPLE_AUDIT_EVENTS} highlightLatest={true} />
+        </Card>
       </Space>
     </div>
   )
