@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Card, Space, Typography, Table, Tag, Row, Col, Divider, Button, message, Switch } from 'antd'
+import { Card, Space, Typography, Table, Tag, Row, Col, Divider, Button, message, Switch, Segmented } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { ThunderboltOutlined, SwapOutlined, TableOutlined, FormOutlined } from '@ant-design/icons'
 import {
@@ -8,6 +8,7 @@ import {
   EnrichmentAuditTimeline,
   AttributeDiffTable,
   DynamicAttributeInput,
+  ClarificationPacketBuilder,
   type EquivalenceStatus,
 } from './components'
 import type {
@@ -16,6 +17,8 @@ import type {
   AttributeComparisonRow,
   AttributeSchema,
   DynamicInputValue,
+  ClarificationPacket,
+  ClarificationMode,
 } from './types'
 
 const { Title, Text, Paragraph } = Typography
@@ -233,6 +236,56 @@ const SAMPLE_SCHEMAS: AttributeSchema[] = [
   },
 ]
 
+const SAMPLE_CLARIFICATION_PACKET: ClarificationPacket = {
+  id: 'pkt-2026-001',
+  comparisonId: 'CMP-7712',
+  buyerNotes: 'Please confirm sterilization parameters and provide packaging GTIN so we can clear this item for OR inventory.',
+  items: [
+    {
+      id: 'cl-1',
+      attributeKey: 'sterility_status',
+      schema: {
+        key: 'sterility_status',
+        label: 'Sterility & Method',
+        dataType: 'ENUM',
+        options: ['Sterile Gamma Radiation (EN 556-1)', 'Sterile EtO (Ethylene Oxide)', 'Non-Sterile (Bulk)'],
+        hospitalTargetValue: 'Sterile Gamma Radiation (EN 556-1)',
+      },
+      llmGeneratedQuestion: 'Does the candidate item undergo terminal gamma radiation sterilization matching hospital protocol EN 556-1?',
+      isDealbreaker: true,
+      selected: true,
+    },
+    {
+      id: 'cl-2',
+      attributeKey: 'latex_free',
+      schema: {
+        key: 'latex_free',
+        label: 'Latex-Free Clinical Rating',
+        dataType: 'BOOLEAN',
+        hospitalTargetValue: true,
+      },
+      llmGeneratedQuestion: 'Please verify whether the product is 100% natural rubber latex-free per FDA / MDR guidelines.',
+      isDealbreaker: true,
+      selected: true,
+    },
+    {
+      id: 'cl-3',
+      attributeKey: 'cuff_length',
+      schema: {
+        key: 'cuff_length',
+        label: 'Cuff Length Specification',
+        dataType: 'NUMBER_WITH_UNIT',
+        unit: 'mm',
+        allowedUnits: ['mm', 'cm'],
+        hospitalTargetValue: 290,
+      },
+      llmGeneratedQuestion: 'Can you specify the total sleeve/cuff length in millimeters for sizing validation?',
+      isDealbreaker: false,
+      selected: true,
+    },
+  ],
+}
+
 const App: React.FC = () => {
   const [data, setData] = useState<TriageItem[]>(INITIAL_TRIAGE_DATA)
   const [selectedKey, setSelectedKey] = useState<string>('1')
@@ -245,6 +298,37 @@ const App: React.FC = () => {
     iso_certification: 'EN 455-1/-2/-3',
     packaging_carton_code: '',
   })
+
+  const [packetMode, setPacketMode] = useState<ClarificationMode>('BUYER')
+  const [activePacket, setActivePacket] = useState<ClarificationPacket>(SAMPLE_CLARIFICATION_PACKET)
+  const [isPacketSubmitting, setIsPacketSubmitting] = useState(false)
+
+  const handleDispatchPacket = (packet: ClarificationPacket) => {
+    setActivePacket(packet)
+    message.success(`Clarification packet dispatched to supplier (${packet.items.length} questions included)`)
+    setPacketMode('SUPPLIER')
+  }
+
+  const handleSupplierPacketSubmit = () => {
+    setIsPacketSubmitting(true)
+    setTimeout(() => {
+      setIsPacketSubmitting(false)
+      message.success('Supplier answers received! Triggered automated LLM re-evaluation webhook.')
+      setData((prev) =>
+        prev.map((item) => {
+          if (item.key === '3') {
+            return {
+              ...item,
+              status: 'RE_EVALUATED',
+              score: 95,
+              deltaScore: 33,
+            }
+          }
+          return item
+        }),
+      )
+    }, 800)
+  }
 
   const handleSelectMissing = (attr: AttributeComparisonRow) => {
     message.info(`Dispatched inquiry to supplier for attribute: ${attr.label}`)
@@ -528,6 +612,41 @@ const App: React.FC = () => {
               </Col>
             ))}
           </Row>
+        </Card>
+
+        {/* Clarification Packet Builder / Form Dual Mode */}
+        <Card
+          size="small"
+          title={
+            <Space align="center">
+              <span>Clarification Packet Workflow</span>
+              <Tag color={packetMode === 'BUYER' ? 'blue' : 'green'}>
+                Mode: {packetMode === 'BUYER' ? 'Mode A (Buyer Builder)' : 'Mode B (Supplier Form)'}
+              </Tag>
+            </Space>
+          }
+          extra={
+            <Space align="center">
+              <Text type="secondary" style={{ fontSize: 12 }}>Workflow Role:</Text>
+              <Segmented
+                size="small"
+                value={packetMode}
+                onChange={(val) => setPacketMode(val as ClarificationMode)}
+                options={[
+                  { label: 'Buyer: Review & Send', value: 'BUYER' },
+                  { label: 'Supplier: Answer & Submit', value: 'SUPPLIER' },
+                ]}
+              />
+            </Space>
+          }
+        >
+          <ClarificationPacketBuilder
+            mode={packetMode}
+            initialPacket={activePacket}
+            onDispatch={handleDispatchPacket}
+            onSubmit={handleSupplierPacketSubmit}
+            isSubmitting={isPacketSubmitting}
+          />
         </Card>
 
         {/* Enrichment Audit Timeline Showcase */}
