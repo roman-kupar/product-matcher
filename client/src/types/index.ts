@@ -1,3 +1,4 @@
 export * from './article'
 export * from './audit'
 export * from './comparison'
+export * from './input'

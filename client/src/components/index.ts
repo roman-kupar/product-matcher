@@ -9,3 +9,6 @@ export type { EnrichmentAuditTimelineProps } from './EnrichmentAuditTimeline'
 
 export { AttributeDiffTable } from './AttributeDiffTable'
 export type { AttributeDiffTableProps } from './AttributeDiffTable'
+
+export { DynamicAttributeInput } from './DynamicAttributeInput'
+export type { DynamicAttributeInputProps } from './DynamicAttributeInput'

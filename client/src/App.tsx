@@ -1,15 +1,22 @@
 import React, { useState } from 'react'
 import { Card, Space, Typography, Table, Tag, Row, Col, Divider, Button, message, Switch } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { ThunderboltOutlined, SwapOutlined, TableOutlined } from '@ant-design/icons'
+import { ThunderboltOutlined, SwapOutlined, TableOutlined, FormOutlined } from '@ant-design/icons'
 import {
   EquivalenceBadge,
   ArticleSummaryCard,
   EnrichmentAuditTimeline,
   AttributeDiffTable,
+  DynamicAttributeInput,
   type EquivalenceStatus,
 } from './components'
-import type { NormalizedArticle, AuditLogEntry, AttributeComparisonRow } from './types'
+import type {
+  NormalizedArticle,
+  AuditLogEntry,
+  AttributeComparisonRow,
+  AttributeSchema,
+  DynamicInputValue,
+} from './types'
 
 const { Title, Text, Paragraph } = Typography
 
@@ -195,12 +202,49 @@ const SAMPLE_ATTRIBUTE_COMPARISON: AttributeComparisonRow[] = [
   },
 ]
 
+const SAMPLE_SCHEMAS: AttributeSchema[] = [
+  {
+    key: 'latex_free',
+    label: 'Latex-Free Clinical Rating',
+    dataType: 'BOOLEAN',
+    hospitalTargetValue: true,
+  },
+  {
+    key: 'cuff_length',
+    label: 'Cuff Length Specification',
+    dataType: 'NUMBER_WITH_UNIT',
+    unit: 'mm',
+    allowedUnits: ['mm', 'cm'],
+    hospitalTargetValue: 290,
+  },
+  {
+    key: 'iso_certification',
+    label: 'ISO & Clinical Standard',
+    dataType: 'ENUM',
+    options: ['ISO 13485:2016', 'ISO 9001:2015', 'EN 455-1/-2/-3', 'ASTM D3577'],
+    hospitalTargetValue: 'EN 455-1/-2/-3',
+  },
+  {
+    key: 'packaging_carton_code',
+    label: 'Secondary Carton GTIN',
+    dataType: 'TEXT',
+    placeholder: 'e.g. 04012345678901',
+    hospitalTargetValue: '04012345678901',
+  },
+]
+
 const App: React.FC = () => {
   const [data, setData] = useState<TriageItem[]>(INITIAL_TRIAGE_DATA)
   const [selectedKey, setSelectedKey] = useState<string>('1')
 
   const selectedItem = data.find((item) => item.key === selectedKey) ?? data[0]
   const [isReadOnlyDiff, setIsReadOnlyDiff] = useState(false)
+  const [formValues, setFormValues] = useState<Record<string, DynamicInputValue>>({
+    latex_free: true,
+    cuff_length: { value: 290, unit: 'mm' },
+    iso_certification: 'EN 455-1/-2/-3',
+    packaging_carton_code: '',
+  })
 
   const handleSelectMissing = (attr: AttributeComparisonRow) => {
     message.info(`Dispatched inquiry to supplier for attribute: ${attr.label}`)
@@ -443,6 +487,47 @@ const App: React.FC = () => {
               </Button>
             }
           />
+        </Card>
+
+        {/* Dynamic Attribute Input Form (The Missing Spec Engine) */}
+        <Card
+          title={
+            <Space align="center">
+              <FormOutlined />
+              <span>Dynamic Attribute Input Engine (Supplier Form)</span>
+              <Tag color="cyan">Machine-Readable Constrained Fields</Tag>
+            </Space>
+          }
+          extra={
+            <Button
+              type="primary"
+              size="small"
+              onClick={() => message.success('Supplier specifications submitted successfully!')}
+            >
+              Submit Specification
+            </Button>
+          }
+          size="small"
+        >
+          <Paragraph type="secondary" style={{ marginBottom: 16 }}>
+            Renders strictly typed, constrained input fields based on missing attribute schema—preventing free-text data degradation with boolean segmented toggles, numeric inputs with unit selectors, and enum dropdowns.
+          </Paragraph>
+          <Row gutter={[24, 16]}>
+            {SAMPLE_SCHEMAS.map((schema) => (
+              <Col xs={24} md={12} key={schema.key}>
+                <DynamicAttributeInput
+                  attributeSchema={schema}
+                  value={formValues[schema.key]}
+                  onChange={(newVal) =>
+                    setFormValues((prev) => ({
+                      ...prev,
+                      [schema.key]: newVal,
+                    }))
+                  }
+                />
+              </Col>
+            ))}
+          </Row>
         </Card>
 
         {/* Enrichment Audit Timeline Showcase */}
