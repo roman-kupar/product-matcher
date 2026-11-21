@@ -6,9 +6,11 @@
 
 ## 1. Project Overview
 
-- Repository: `article-enricher`
-- Tech Stack: React 19, TypeScript, Vite, ESLint
-- Package Manager: `npm`
+- Repository: `article-enricher` (Monorepo)
+- Structure:
+  - `webclient/`: Frontend React 19 UI with Vite and TypeScript
+  - `service/`: Backend Node.js service with TypeScript (ESM)
+- Package Manager: `npm` (Workspaces enabled)
 
 ---
 
@@ -46,17 +48,22 @@ Agents must strictly adhere to the following negative constraints. Violation of 
 ## 3. Standard Development Workflow
 
 ### 3.1. Development & Build Commands
-| Task | Command | Description |
-| :--- | :--- | :--- |
-| Development | `npm run dev` | Start Vite dev server with HMR |
-| Type Check & Build | `npm run build` | Run TypeScript build check (`tsc -b`) and Vite production bundle |
-| Linting | `npm run lint` | Run ESLint across workspace |
-| Preview | `npm run preview` | Locally preview production build |
+| Scope | Task | Command | Description |
+| :--- | :--- | :--- | :--- |
+| **All** | Dev | `npm run dev` | Start all workspace dev servers |
+| **All** | Build | `npm run build` | Build all workspaces (`webclient` & `service`) |
+| **All** | Lint | `npm run lint` | Lint all workspaces |
+| **webclient** | Dev | `npm run dev:webclient` | Start Vite dev server for React UI |
+| **webclient** | Build | `npm run build:webclient` | Type check and bundle frontend |
+| **webclient** | Lint | `npm run lint:webclient` | Run ESLint across frontend |
+| **service** | Dev | `npm run dev:service` | Start Node service in watch mode |
+| **service** | Build | `npm run build:service` | Compile Node TypeScript backend |
+| **service** | Lint | `npm run lint:service` | Type check backend (`tsc --noEmit`) |
 
 ### 3.2. Verification Before Handoff
 Before marking any task as complete:
-1. Lint Verification: Execute `npm run lint` and verify zero errors/warnings are introduced.
-2. Type Verification: Execute `npm run build` (or `npx tsc --noEmit`) to verify strict TypeScript compilation.
+1. Lint Verification: Execute `npm run lint` (or package-specific lint) and verify zero errors/warnings.
+2. Type Verification: Execute `npm run build` (or package-specific build) to verify strict compilation.
 3. Fix all introduced warnings and errors prior to requesting user review.
 
 ---
