@@ -1,324 +1,25 @@
-import React, { useState } from 'react'
-import { Card, Space, Typography, Tag, Row, Col, Divider, Button, message, Switch, Segmented } from 'antd'
-import { ThunderboltOutlined, SwapOutlined, TableOutlined, FormOutlined } from '@ant-design/icons'
+import React, { useState, useCallback } from 'react'
+import { Space, Typography, Button } from 'antd'
+import { ThunderboltOutlined } from '@ant-design/icons'
+import { useTriageWorkflow, useClarificationWorkflow } from './hooks'
+import type { DynamicInputValue } from './types'
 import {
-  EquivalenceBadge,
-  ArticleSummaryCard,
-  EnrichmentAuditTimeline,
-  AttributeDiffTable,
-  DynamicAttributeInput,
-  ClarificationPacketBuilder,
-  MasterDetailTriageLayout,
-  DeltaHighlightWrapper,
-  type EquivalenceStatus,
-} from './components'
-import type {
-  NormalizedArticle,
-  AuditLogEntry,
-  AttributeComparisonRow,
-  AttributeSchema,
-  DynamicInputValue,
-  ClarificationPacket,
-  ClarificationMode,
-  StatusTabConfig,
-} from './types'
+  StatusPaletteSection,
+  WorkbenchSection,
+  ComparisonSection,
+  AttributeDiffSection,
+  SupplierReferenceSection,
+  DynamicInputSection,
+  ClarificationSection,
+  AuditTimelineSection,
+} from './sections'
 
-const { Title, Text, Paragraph } = Typography
-
-interface TriageItem {
-  id: string
-  key: string
-  articleId: string
-  buyerArticle: string
-  supplierArticle: string
-  status: EquivalenceStatus
-  score: number
-  deltaScore?: number
-}
-
-const INITIAL_TRIAGE_DATA: TriageItem[] = [
-  {
-    id: '1',
-    key: '1',
-    articleId: 'ART-9041',
-    buyerArticle: 'Industrial Hex Bolt M8x40 (Steel 8.8)',
-    supplierArticle: 'Hex Head Screw DIN 933 M8x40 8.8 Galvanized',
-    status: 'MATCHED',
-    score: 96,
-    deltaScore: 18,
-  },
-  {
-    id: '2',
-    key: '2',
-    articleId: 'ART-8820',
-    buyerArticle: 'Hydraulic Seal Ring 25x35x7 NBR',
-    supplierArticle: 'Radial Shaft Seal 25-35-7 NBR Standard',
-    status: 'RE_EVALUATED',
-    score: 84,
-    deltaScore: 12,
-  },
-  {
-    id: '3',
-    key: '3',
-    articleId: 'ART-7712',
-    buyerArticle: 'LED Indicator 24V Green IP67',
-    supplierArticle: 'Pilot Lamp 24V Green IP65',
-    status: 'NEEDS_INFO',
-    score: 62,
-  },
-  {
-    id: '4',
-    key: '4',
-    articleId: 'ART-6540',
-    buyerArticle: 'Circuit Breaker 16A Type C 3-Pole',
-    supplierArticle: 'MCB 16A 3P Curve B 6kA',
-    status: 'CONFLICT',
-    score: 41,
-    deltaScore: -14,
-  },
-  {
-    id: '5',
-    key: '5',
-    articleId: 'ART-5401',
-    buyerArticle: 'Ball Bearing 6204 2RS C3',
-    supplierArticle: 'Deep Groove Ball Bearing 6204-ZZ',
-    status: 'AWAITING_SUPPLIER',
-    score: 71,
-  },
-]
-
-const SAMPLE_HOSPITAL_ARTICLE: NormalizedArticle = {
-  id: 'HOSP-10042',
-  title: 'Surgical Gloves Powder-Free Sterile Size 7.5 Latex',
-  sku: 'SG-75-LAT-PF',
-  gtin: '04012345678901',
-  manufacturer: 'Hartmann MedTech AG',
-  packagingUnit: 'Box of 50 pairs',
-}
-
-const SAMPLE_SUPPLIER_ARTICLE: NormalizedArticle = {
-  id: 'SUPP-9921',
-  title: 'Peha-soft Powder-Free Surgical Latex Gloves Sz 7.5',
-  sku: '942204-PF',
-  gtin: '04012345678901',
-  manufacturer: 'Hartmann MedTech AG',
-  packagingUnit: 'Box of 50 pairs (dispenser carton)',
-}
-
-const SAMPLE_AUDIT_EVENTS: AuditLogEntry[] = [
-  {
-    id: 'evt-1',
-    timestamp: '2026-11-20 09:14',
-    type: 'INITIAL_SCAN',
-    title: 'Initial LLM Extraction & Matching',
-    actor: { name: 'Gemini Pipeline v2.4', role: 'LLM' },
-    summary: 'Catalog cross-reference completed. Candidate match identified with score 62% (status: NEEDS_INFO due to missing sterility standard).',
-    fieldChanges: [
-      { field: 'Equivalence Score', newValue: '62%' },
-      { field: 'Equivalence Status', newValue: 'NEEDS_INFO' },
-    ],
-  },
-  {
-    id: 'evt-2',
-    timestamp: '2026-11-20 11:30',
-    type: 'QUESTIONS_SENT',
-    title: 'Clarification Questionnaire Dispatched',
-    actor: { name: 'Sarah L. (Procurement Lead)', role: 'BUYER' },
-    summary: 'Automated questionnaire sent to supplier requesting EN 455 sterile certification and exact carton packaging units.',
-  },
-  {
-    id: 'evt-3',
-    timestamp: '2026-11-21 08:45',
-    type: 'SUPPLIER_ANSWERED',
-    title: 'Supplier Specification Submission',
-    actor: { name: 'Hartmann MedTech Rep (Klaus V.)', role: 'SUPPLIER' },
-    summary: 'Supplier confirmed sterile gamma radiation certification and updated packaging hierarchy.',
-    fieldChanges: [
-      { field: 'Packaging Unit', previousValue: 'Box of 50', newValue: 'Box of 50 pairs (dispenser carton)' },
-      { field: 'Sterility Standard', previousValue: 'Unspecified', newValue: 'EN 455-1/-2 Sterile Gamma' },
-    ],
-  },
-  {
-    id: 'evt-4',
-    timestamp: '2026-11-21 08:46',
-    type: 'LLM_RE_EVALUATED',
-    title: 'Automated Re-evaluation & Verification',
-    actor: { name: 'Gemini Pipeline v2.4', role: 'LLM' },
-    summary: 'Extracted attributes verified against hospital master spec. Match confidence escalated to 96% with full equivalence verified.',
-    fieldChanges: [
-      { field: 'Equivalence Score', previousValue: '62%', newValue: '96%' },
-      { field: 'Score Delta', newValue: '+34%' },
-      { field: 'Equivalence Status', previousValue: 'NEEDS_INFO', newValue: 'MATCHED' },
-    ],
-    notes: 'All mandatory hospital clinical requirements satisfied.',
-  },
-]
-
-const SAMPLE_ATTRIBUTE_COMPARISON: AttributeComparisonRow[] = [
-  {
-    key: 'size_nominal',
-    label: 'Glove Size (Nominal)',
-    dataType: 'STRING',
-    hospitalValue: '7.5 (Medium-Large)',
-    supplierValue: '7.5 (Medium-Large)',
-    status: 'EXACT_MATCH',
-    isClinicalDealbreaker: true,
-    llmNote: 'Exact dimensional match verified across both specifications.',
-  },
-  {
-    key: 'material_composition',
-    label: 'Material Composition',
-    dataType: 'ENUM',
-    enumOptions: ['Natural Rubber Latex', 'Nitrile', 'Neoprene', 'Polyisoprene'],
-    hospitalValue: 'Natural Rubber Latex (Low Protein)',
-    supplierValue: 'Natural Rubber Latex (Low Protein)',
-    previousSupplierValue: 'Natural Rubber Latex',
-    status: 'EXACT_MATCH',
-    isClinicalDealbreaker: true,
-    llmNote: 'Supplier submitted low protein certification (<50 µg/g per EN 455-3).',
-    enrichmentSource: 'SUPPLIER_RESPONSE',
-    updatedBySupplier: true,
-  },
-  {
-    key: 'sterility_status',
-    label: 'Sterility & Method',
-    dataType: 'ENUM',
-    enumOptions: ['Sterile Gamma', 'Sterile EtO', 'Non-Sterile'],
-    hospitalValue: 'Sterile Gamma Radiation (EN 556-1)',
-    supplierValue: null,
-    status: 'MISSING_DATA',
-    isClinicalDealbreaker: true,
-    llmNote: 'Supplier catalog does not explicitly state sterilization protocol. Clarification required.',
-  },
-  {
-    key: 'cuff_thickness',
-    label: 'Cuff Thickness',
-    dataType: 'NUMBER_WITH_UNIT',
-    unit: 'mm',
-    hospitalValue: 0.22,
-    supplierValue: 0.20,
-    status: 'SOFT_MISMATCH',
-    isClinicalDealbreaker: false,
-    llmNote: 'Minor 0.02mm variance within clinical tolerance of ±0.03mm (ASTM D3577).',
-  },
-  {
-    key: 'powder_content',
-    label: 'Powder Status',
-    dataType: 'BOOLEAN',
-    hospitalValue: false,
-    supplierValue: true,
-    status: 'CLINICAL_CONFLICT',
-    isClinicalDealbreaker: true,
-    llmNote: 'Hospital requires 100% Powder-Free for OR surgical use; candidate is Lightly Powdered.',
-  },
-]
-
-const SAMPLE_SCHEMAS: AttributeSchema[] = [
-  {
-    key: 'latex_free',
-    label: 'Latex-Free Clinical Rating',
-    dataType: 'BOOLEAN',
-    hospitalTargetValue: true,
-  },
-  {
-    key: 'cuff_length',
-    label: 'Cuff Length Specification',
-    dataType: 'NUMBER_WITH_UNIT',
-    unit: 'mm',
-    allowedUnits: ['mm', 'cm'],
-    hospitalTargetValue: 290,
-  },
-  {
-    key: 'iso_certification',
-    label: 'ISO & Clinical Standard',
-    dataType: 'ENUM',
-    options: ['ISO 13485:2016', 'ISO 9001:2015', 'EN 455-1/-2/-3', 'ASTM D3577'],
-    hospitalTargetValue: 'EN 455-1/-2/-3',
-  },
-  {
-    key: 'packaging_carton_code',
-    label: 'Secondary Carton GTIN',
-    dataType: 'TEXT',
-    placeholder: 'e.g. 04012345678901',
-    hospitalTargetValue: '04012345678901',
-  },
-]
-
-const SAMPLE_CLARIFICATION_PACKET: ClarificationPacket = {
-  id: 'pkt-2026-001',
-  comparisonId: 'CMP-7712',
-  buyerNotes: 'Please confirm sterilization parameters and provide packaging GTIN so we can clear this item for OR inventory.',
-  items: [
-    {
-      id: 'cl-1',
-      attributeKey: 'sterility_status',
-      schema: {
-        key: 'sterility_status',
-        label: 'Sterility & Method',
-        dataType: 'ENUM',
-        options: ['Sterile Gamma Radiation (EN 556-1)', 'Sterile EtO (Ethylene Oxide)', 'Non-Sterile (Bulk)'],
-        hospitalTargetValue: 'Sterile Gamma Radiation (EN 556-1)',
-      },
-      llmGeneratedQuestion: 'Does the candidate item undergo terminal gamma radiation sterilization matching hospital protocol EN 556-1?',
-      isDealbreaker: true,
-      selected: true,
-    },
-    {
-      id: 'cl-2',
-      attributeKey: 'latex_free',
-      schema: {
-        key: 'latex_free',
-        label: 'Latex-Free Clinical Rating',
-        dataType: 'BOOLEAN',
-        hospitalTargetValue: true,
-      },
-      llmGeneratedQuestion: 'Please verify whether the product is 100% natural rubber latex-free per FDA / MDR guidelines.',
-      isDealbreaker: true,
-      selected: true,
-    },
-    {
-      id: 'cl-3',
-      attributeKey: 'cuff_length',
-      schema: {
-        key: 'cuff_length',
-        label: 'Cuff Length Specification',
-        dataType: 'NUMBER_WITH_UNIT',
-        unit: 'mm',
-        allowedUnits: ['mm', 'cm'],
-        hospitalTargetValue: 290,
-      },
-      llmGeneratedQuestion: 'Can you specify the total sleeve/cuff length in millimeters for sizing validation?',
-      isDealbreaker: false,
-      selected: true,
-    },
-  ],
-}
-
-const STATUS_TABS: StatusTabConfig<TriageItem>[] = [
-  {
-    key: 'ALL',
-    label: 'All Items',
-  },
-  {
-    key: 'ACTION_REQUIRED',
-    label: 'Action Required',
-    filterFn: (item) => item.status === 'NEEDS_INFO' || item.status === 'CONFLICT',
-  },
-  {
-    key: 'PENDING_SUPPLIER',
-    label: 'Pending Supplier',
-    filterFn: (item) => item.status === 'AWAITING_SUPPLIER',
-  },
-  {
-    key: 'RESOLVED',
-    label: 'Resolved',
-    filterFn: (item) => item.status === 'MATCHED' || item.status === 'RE_EVALUATED',
-  },
-]
+const { Title, Paragraph } = Typography
 
 const App: React.FC = () => {
-  const [data, setData] = useState<TriageItem[]>(INITIAL_TRIAGE_DATA)
-  const [selectedKey, setSelectedKey] = useState<string>('1')
+  const triage = useTriageWorkflow()
+  const clarification = useClarificationWorkflow()
+
   const [isReadOnlyDiff, setIsReadOnlyDiff] = useState(false)
   const [formValues, setFormValues] = useState<Record<string, DynamicInputValue>>({
     latex_free: true,
@@ -327,340 +28,67 @@ const App: React.FC = () => {
     packaging_carton_code: '',
   })
 
-  const [packetMode, setPacketMode] = useState<ClarificationMode>('BUYER')
-  const [activePacket, setActivePacket] = useState<ClarificationPacket>(SAMPLE_CLARIFICATION_PACKET)
-  const [isPacketSubmitting, setIsPacketSubmitting] = useState(false)
+  const handleFormValueChange = useCallback((key: string, value: DynamicInputValue) => {
+    setFormValues((prev) => ({ ...prev, [key]: value }))
+  }, [])
 
-  const handleDispatchPacket = (packet: ClarificationPacket) => {
-    setActivePacket(packet)
-    message.success(`Clarification packet dispatched to supplier (${packet.items.length} questions included)`)
-    setPacketMode('SUPPLIER')
-  }
-
-  const handleSupplierPacketSubmit = () => {
-    setIsPacketSubmitting(true)
-    setTimeout(() => {
-      setIsPacketSubmitting(false)
-      message.success('Supplier answers received! Triggered automated LLM re-evaluation webhook.')
-      setData((prev) =>
-        prev.map((item) => {
-          if (item.key === '3') {
-            return {
-              ...item,
-              status: 'RE_EVALUATED',
-              score: 95,
-              deltaScore: 33,
-            }
-          }
-          return item
-        }),
-      )
-    }, 800)
-  }
-
-  const handleSelectMissing = (attr: AttributeComparisonRow) => {
-    message.info(`Dispatched inquiry to supplier for attribute: ${attr.label}`)
-  }
-
-  const simulateEnrichment = () => {
-    setData((prev) =>
-      prev.map((item) => {
-        if (item.key === '3') {
-          return {
-            ...item,
-            status: 'RE_EVALUATED',
-            score: 91,
-            deltaScore: 29,
-          }
-        }
-        return item
-      }),
-    )
-  }
+  const handleSupplierSubmit = useCallback(() => {
+    clarification.handleSupplierPacketSubmit(() => {
+      triage.updateItemStatus('3', { status: 'RE_EVALUATED', score: 95, deltaScore: 33 })
+    })
+  }, [clarification, triage])
 
   return (
     <div style={{ maxWidth: 1180, margin: '32px auto', padding: '0 24px' }}>
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
-        {/* Header */}
         <header>
           <Space align="center" style={{ justifyContent: 'space-between', width: '100%' }}>
             <div>
-              <Title level={3} style={{ margin: 0 }}>
-                Article Enricher Triage
-              </Title>
+              <Title level={3} style={{ margin: 0 }}>Article Enricher Triage</Title>
               <Paragraph type="secondary" style={{ margin: '4px 0 0' }}>
                 Automated matching & spec enrichment verification
               </Paragraph>
             </div>
-            <Button
-              type="primary"
-              icon={<ThunderboltOutlined />}
-              onClick={simulateEnrichment}
-            >
+            <Button type="primary" icon={<ThunderboltOutlined />} onClick={triage.simulateEnrichment}>
               Simulate Spec Enrichment
             </Button>
           </Space>
         </header>
 
-        {/* Status Palette Showcase */}
-        <Card title="<EquivalenceBadge /> States & Variations (with <DeltaHighlightWrapper />)" size="small">
-          <Space orientation="horizontal" size={[12, 12]} wrap>
-            <EquivalenceBadge status="MATCHED" score={96} deltaScore={18} />
-            <DeltaHighlightWrapper isUpdated={true} inline={true} label="Newly Enriched" previousValue="72%">
-              <EquivalenceBadge status="RE_EVALUATED" score={85} deltaScore={12} />
-            </DeltaHighlightWrapper>
-            <EquivalenceBadge status="NEEDS_INFO" score={62} />
-            <EquivalenceBadge status="AWAITING_SUPPLIER" score={70} />
-            <EquivalenceBadge status="CONFLICT" score={41} deltaScore={-14} />
-          </Space>
-        </Card>
+        <StatusPaletteSection />
 
-        {/* Master-Detail Triage Layout Shell (Hospital Purchaser Workbench) */}
-        <MasterDetailTriageLayout
-          title={
-            <Space align="center">
-              <span>Hospital Purchaser Workbench</span>
-              <Tag color="blue">{data.length} Total Enriched Items</Tag>
-            </Space>
-          }
-          extraHeader={
-            <Space>
-              <Button
-                type="primary"
-                icon={<ThunderboltOutlined />}
-                onClick={simulateEnrichment}
-                size="small"
-              >
-                Simulate Spec Enrichment
-              </Button>
-            </Space>
-          }
-          items={data}
-          selectedId={selectedKey}
-          onSelect={(id) => setSelectedKey(String(id))}
-          statusTabs={STATUS_TABS}
-          renderListItem={(item) => (
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                <Text code style={{ fontSize: 11 }}>{item.articleId}</Text>
-                <EquivalenceBadge status={item.status} score={item.score} deltaScore={item.deltaScore} size="small" />
-              </div>
-              <Text strong style={{ fontSize: 12, display: 'block' }} ellipsis={{ tooltip: item.buyerArticle }}>
-                {item.buyerArticle}
-              </Text>
-              <Text type="secondary" style={{ fontSize: 11, display: 'block', marginTop: 2 }} ellipsis={{ tooltip: item.supplierArticle }}>
-                Candidate: {item.supplierArticle}
-              </Text>
-            </div>
-          )}
-          renderDetailPane={(item) =>
-            item ? (
-              <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div>
-                    <Text type="secondary" style={{ fontSize: 11 }}>INSPECTION WORKSPACE • {item.articleId}</Text>
-                    <Title level={4} style={{ margin: '2px 0 0 0' }}>{item.buyerArticle}</Title>
-                  </div>
-                  <DeltaHighlightWrapper
-                    isUpdated={item.status === 'RE_EVALUATED'}
-                    inline={true}
-                    label="Newly Enriched"
-                    previousValue="62%"
-                  >
-                    <EquivalenceBadge status={item.status} score={item.score} deltaScore={item.deltaScore} size="middle" />
-                  </DeltaHighlightWrapper>
-                </div>
-
-                <Divider style={{ margin: '8px 0' }} />
-
-                <Row gutter={[16, 16]}>
-                  <Col xs={24} md={12}>
-                    <ArticleSummaryCard
-                      article={SAMPLE_HOSPITAL_ARTICLE}
-                      sourceType="HOSPITAL"
-                      extra={<Tag color="blue">Hospital Internal</Tag>}
-                    />
-                  </Col>
-                  <Col xs={24} md={12}>
-                    <ArticleSummaryCard
-                      article={SAMPLE_SUPPLIER_ARTICLE}
-                      sourceType="SUPPLIER"
-                      extra={<Tag color="purple">Supplier Catalog</Tag>}
-                    />
-                  </Col>
-                </Row>
-              </Space>
-            ) : null
-          }
+        <WorkbenchSection
+          items={triage.items}
+          selectedId={triage.selectedId}
+          onSelect={triage.setSelectedId}
+          onSimulateEnrichment={triage.simulateEnrichment}
         />
 
-        {/* Side-by-Side Buyer Comparison View */}
-        <Card
-          title={
-            <Space align="center">
-              <span>Buyer Comparison View (Side-by-Side Header)</span>
-              <EquivalenceBadge status="MATCHED" score={96} deltaScore={18} size="small" />
-            </Space>
-          }
-          size="small"
-        >
-          <Row gutter={[16, 16]} align="stretch">
-            <Col xs={24} md={12}>
-              <ArticleSummaryCard
-                article={SAMPLE_HOSPITAL_ARTICLE}
-                sourceType="HOSPITAL"
-                extra={<Tag color="blue">Internal Master</Tag>}
-              />
-            </Col>
-            <Col xs={24} md={12}>
-              <ArticleSummaryCard
-                article={SAMPLE_SUPPLIER_ARTICLE}
-                sourceType="SUPPLIER"
-                extra={<Tag color="purple">Suggested Match</Tag>}
-              />
-            </Col>
-          </Row>
-        </Card>
+        <ComparisonSection />
 
-        {/* Attribute Comparison Grid (The Engine) */}
-        <Card
-          title={
-            <Space align="center">
-              <TableOutlined />
-              <span>Attribute Diff & Clinical Specification Grid</span>
-              <Tag color="geekblue">5 Attributes Evaluated</Tag>
-            </Space>
-          }
-          extra={
-            <Space align="center">
-              <Text type="secondary" style={{ fontSize: 12 }}>Supplier Read-Only Mode:</Text>
-              <Switch
-                size="small"
-                checked={isReadOnlyDiff}
-                onChange={setIsReadOnlyDiff}
-              />
-            </Space>
-          }
-          size="small"
-        >
-          <Paragraph type="secondary" style={{ marginBottom: 14 }}>
-            Row-by-row alignment between hospital requirements and supplier catalog attributes, color-coding match states (Exact Match, Missing Data, Soft Mismatch, Clinical Conflict) with clinical dealbreaker indicators.
-          </Paragraph>
-          <AttributeDiffTable
-            attributes={SAMPLE_ATTRIBUTE_COMPARISON}
-            readOnly={isReadOnlyDiff}
-            onSelectMissing={handleSelectMissing}
-          />
-        </Card>
+        <AttributeDiffSection
+          isReadOnly={isReadOnlyDiff}
+          onReadOnlyChange={setIsReadOnlyDiff}
+          onSelectMissing={triage.handleSelectMissing}
+        />
 
-        {/* Supplier Response Screen Reference Spec Preview */}
-        <Card title="Supplier Response Screen (Reference Spec Card)" size="small">
-          <Paragraph type="secondary" style={{ marginBottom: 12 }}>
-            Displayed at the top of the supplier task interface so suppliers know exactly which hospital specification they are reviewing.
-          </Paragraph>
-          <ArticleSummaryCard
-            article={SAMPLE_HOSPITAL_ARTICLE}
-            sourceType="HOSPITAL"
-            compact={true}
-            extra={
-              <Button size="small" icon={<SwapOutlined />}>
-                Suggest Alternative
-              </Button>
-            }
-          />
-        </Card>
+        <SupplierReferenceSection />
 
-        {/* Dynamic Attribute Input Form (The Missing Spec Engine) */}
-        <Card
-          title={
-            <Space align="center">
-              <FormOutlined />
-              <span>Dynamic Attribute Input Engine (Supplier Form)</span>
-              <Tag color="cyan">Machine-Readable Constrained Fields</Tag>
-            </Space>
-          }
-          extra={
-            <Button
-              type="primary"
-              size="small"
-              onClick={() => message.success('Supplier specifications submitted successfully!')}
-            >
-              Submit Specification
-            </Button>
-          }
-          size="small"
-        >
-          <Paragraph type="secondary" style={{ marginBottom: 16 }}>
-            Renders strictly typed, constrained input fields based on missing attribute schema—preventing free-text data degradation with boolean segmented toggles, numeric inputs with unit selectors, and enum dropdowns.
-          </Paragraph>
-          <Row gutter={[24, 16]}>
-            {SAMPLE_SCHEMAS.map((schema) => (
-              <Col xs={24} md={12} key={schema.key}>
-                <DynamicAttributeInput
-                  attributeSchema={schema}
-                  value={formValues[schema.key]}
-                  onChange={(newVal) =>
-                    setFormValues((prev) => ({
-                      ...prev,
-                      [schema.key]: newVal,
-                    }))
-                  }
-                />
-              </Col>
-            ))}
-          </Row>
-        </Card>
+        <DynamicInputSection
+          formValues={formValues}
+          onFormValueChange={handleFormValueChange}
+        />
 
-        {/* Clarification Packet Builder / Form Dual Mode */}
-        <Card
-          size="small"
-          title={
-            <Space align="center">
-              <span>Clarification Packet Workflow</span>
-              <Tag color={packetMode === 'BUYER' ? 'blue' : 'green'}>
-                Mode: {packetMode === 'BUYER' ? 'Mode A (Buyer Builder)' : 'Mode B (Supplier Form)'}
-              </Tag>
-            </Space>
-          }
-          extra={
-            <Space align="center">
-              <Text type="secondary" style={{ fontSize: 12 }}>Workflow Role:</Text>
-              <Segmented
-                size="small"
-                value={packetMode}
-                onChange={(val) => setPacketMode(val as ClarificationMode)}
-                options={[
-                  { label: 'Buyer: Review & Send', value: 'BUYER' },
-                  { label: 'Supplier: Answer & Submit', value: 'SUPPLIER' },
-                ]}
-              />
-            </Space>
-          }
-        >
-          <ClarificationPacketBuilder
-            mode={packetMode}
-            initialPacket={activePacket}
-            onDispatch={handleDispatchPacket}
-            onSubmit={handleSupplierPacketSubmit}
-            isSubmitting={isPacketSubmitting}
-          />
-        </Card>
+        <ClarificationSection
+          mode={clarification.packetMode}
+          onModeChange={clarification.setPacketMode}
+          activePacket={clarification.activePacket}
+          isSubmitting={clarification.isPacketSubmitting}
+          onDispatch={clarification.handleDispatchPacket}
+          onSubmit={handleSupplierSubmit}
+        />
 
-        {/* Enrichment Audit Timeline Showcase */}
-        <Card
-          title={
-            <Space align="center">
-              <span>Lifecycle Audit Trail (<EquivalenceBadge status="MATCHED" score={96} size="small" />)</span>
-              <Tag color="green">4 Events Recorded</Tag>
-            </Space>
-          }
-          size="small"
-        >
-          <Paragraph type="secondary" style={{ marginBottom: 16 }}>
-            Transparent timeline tracking every automated and human lifecycle stage (Initial LLM Scan → Questions Sent → Supplier Answered → LLM Re-evaluated), logging who changed which field and when.
-          </Paragraph>
-          <EnrichmentAuditTimeline events={SAMPLE_AUDIT_EVENTS} highlightLatest={true} />
-        </Card>
+        <AuditTimelineSection />
       </Space>
     </div>
   )

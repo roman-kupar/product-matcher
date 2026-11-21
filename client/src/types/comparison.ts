@@ -1,3 +1,10 @@
+export type EquivalenceStatus =
+  | 'MATCHED'
+  | 'NEEDS_INFO'
+  | 'CONFLICT'
+  | 'AWAITING_SUPPLIER'
+  | 'RE_EVALUATED'
+
 export type MatchStatus =
   | 'EXACT_MATCH'
   | 'MISSING_DATA'
