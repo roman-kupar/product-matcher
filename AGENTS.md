@@ -8,7 +8,7 @@
 
 - Repository: `article-enricher` (Monorepo)
 - Structure:
-  - `webclient/`: Frontend React 19 UI with Vite and TypeScript
+  - `client/`: Frontend React 19 UI with Vite and TypeScript
   - `service/`: Backend Node.js service with TypeScript (ESM)
 - Package Manager: `npm` (Workspaces enabled)
 
@@ -53,9 +53,9 @@ Agents must strictly adhere to the following negative constraints. Violation of 
 | **All** | Dev | `npm run dev` | Start all workspace dev servers |
 | **All** | Build | `npm run build` | Build all workspaces (`webclient` & `service`) |
 | **All** | Lint | `npm run lint` | Lint all workspaces |
-| **webclient** | Dev | `npm run dev:webclient` | Start Vite dev server for React UI |
-| **webclient** | Build | `npm run build:webclient` | Type check and bundle frontend |
-| **webclient** | Lint | `npm run lint:webclient` | Run ESLint across frontend |
+| **client** | Dev | `npm run dev:client` | Start Vite dev server for React UI |
+| **client** | Build | `npm run build:client` | Type check and bundle frontend |
+| **client** | Lint | `npm run lint:client` | Run ESLint across frontend |
 | **service** | Dev | `npm run dev:service` | Start Node service in watch mode |
 | **service** | Build | `npm run build:service` | Compile Node TypeScript backend |
 | **service** | Lint | `npm run lint:service` | Type check backend (`tsc --noEmit`) |

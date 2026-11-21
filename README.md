@@ -4,7 +4,7 @@ A monorepo containing the frontend web application and backend service.
 
 ## Structure
 
-- [`webclient/`](./webclient): Frontend React 19 UI built with Vite and TypeScript.
+- [`client/`](./client): Frontend React 19 UI built with Vite and TypeScript.
 - [`service/`](./service): Backend Node.js service built with TypeScript (native ESM).
 
 ## Getting Started
@@ -15,7 +15,7 @@ A monorepo containing the frontend web application and backend service.
 npm run dev
 
 # Or run individually
-npm run dev:webclient
+npm run dev:client
 npm run dev:service
 ```
 
@@ -25,7 +25,7 @@ npm run dev:service
 npm run build
 
 # Or build individually
-npm run build:webclient
+npm run build:client
 npm run build:service
 ```
 
@@ -35,6 +35,6 @@ npm run build:service
 npm run lint
 
 # Or check individually
-npm run lint:webclient
+npm run lint:client
 npm run lint:service
 ```

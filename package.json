@@ -3,18 +3,18 @@
   "private": true,
   "version": "1.0.0",
   "workspaces": [
-    "webclient",
+    "client",
     "service"
   ],
   "scripts": {
     "dev": "npm run dev --workspaces",
-    "dev:webclient": "npm run dev --workspace=webclient",
+    "dev:client": "npm run dev --workspace=client",
     "dev:service": "npm run dev --workspace=service",
     "build": "npm run build --workspaces",
-    "build:webclient": "npm run build --workspace=webclient",
+    "build:client": "npm run build --workspace=client",
     "build:service": "npm run build --workspace=service",
     "lint": "npm run lint --workspaces",
-    "lint:webclient": "npm run lint --workspace=webclient",
+    "lint:client": "npm run lint --workspace=client",
     "lint:service": "npm run lint --workspace=service"
   }
 }

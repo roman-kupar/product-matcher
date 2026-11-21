@@ -1,5 +1,5 @@
 {
-  "name": "webclient",
+  "name": "client",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@ant-design/icons": "^6.3.4",
+    "antd": "^6.7.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },
