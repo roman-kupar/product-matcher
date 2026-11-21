@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
-import { Card, Space, Typography, Table, Tag, Row, Col, Divider, Button, message, Switch, Segmented } from 'antd'
-import type { ColumnsType } from 'antd/es/table'
+import { Card, Space, Typography, Tag, Row, Col, Divider, Button, message, Switch, Segmented } from 'antd'
 import { ThunderboltOutlined, SwapOutlined, TableOutlined, FormOutlined } from '@ant-design/icons'
 import {
   EquivalenceBadge,
@@ -9,6 +8,7 @@ import {
   AttributeDiffTable,
   DynamicAttributeInput,
   ClarificationPacketBuilder,
+  MasterDetailTriageLayout,
   type EquivalenceStatus,
 } from './components'
 import type {
@@ -19,11 +19,13 @@ import type {
   DynamicInputValue,
   ClarificationPacket,
   ClarificationMode,
+  StatusTabConfig,
 } from './types'
 
 const { Title, Text, Paragraph } = Typography
 
 interface TriageItem {
+  id: string
   key: string
   articleId: string
   buyerArticle: string
@@ -35,6 +37,7 @@ interface TriageItem {
 
 const INITIAL_TRIAGE_DATA: TriageItem[] = [
   {
+    id: '1',
     key: '1',
     articleId: 'ART-9041',
     buyerArticle: 'Industrial Hex Bolt M8x40 (Steel 8.8)',
@@ -44,6 +47,7 @@ const INITIAL_TRIAGE_DATA: TriageItem[] = [
     deltaScore: 18,
   },
   {
+    id: '2',
     key: '2',
     articleId: 'ART-8820',
     buyerArticle: 'Hydraulic Seal Ring 25x35x7 NBR',
@@ -53,6 +57,7 @@ const INITIAL_TRIAGE_DATA: TriageItem[] = [
     deltaScore: 12,
   },
   {
+    id: '3',
     key: '3',
     articleId: 'ART-7712',
     buyerArticle: 'LED Indicator 24V Green IP67',
@@ -61,6 +66,7 @@ const INITIAL_TRIAGE_DATA: TriageItem[] = [
     score: 62,
   },
   {
+    id: '4',
     key: '4',
     articleId: 'ART-6540',
     buyerArticle: 'Circuit Breaker 16A Type C 3-Pole',
@@ -70,6 +76,7 @@ const INITIAL_TRIAGE_DATA: TriageItem[] = [
     deltaScore: -14,
   },
   {
+    id: '5',
     key: '5',
     articleId: 'ART-5401',
     buyerArticle: 'Ball Bearing 6204 2RS C3',
@@ -286,11 +293,31 @@ const SAMPLE_CLARIFICATION_PACKET: ClarificationPacket = {
   ],
 }
 
+const STATUS_TABS: StatusTabConfig<TriageItem>[] = [
+  {
+    key: 'ALL',
+    label: 'All Items',
+  },
+  {
+    key: 'ACTION_REQUIRED',
+    label: 'Action Required',
+    filterFn: (item) => item.status === 'NEEDS_INFO' || item.status === 'CONFLICT',
+  },
+  {
+    key: 'PENDING_SUPPLIER',
+    label: 'Pending Supplier',
+    filterFn: (item) => item.status === 'AWAITING_SUPPLIER',
+  },
+  {
+    key: 'RESOLVED',
+    label: 'Resolved',
+    filterFn: (item) => item.status === 'MATCHED' || item.status === 'RE_EVALUATED',
+  },
+]
+
 const App: React.FC = () => {
   const [data, setData] = useState<TriageItem[]>(INITIAL_TRIAGE_DATA)
   const [selectedKey, setSelectedKey] = useState<string>('1')
-
-  const selectedItem = data.find((item) => item.key === selectedKey) ?? data[0]
   const [isReadOnlyDiff, setIsReadOnlyDiff] = useState(false)
   const [formValues, setFormValues] = useState<Record<string, DynamicInputValue>>({
     latex_free: true,
@@ -333,39 +360,6 @@ const App: React.FC = () => {
   const handleSelectMissing = (attr: AttributeComparisonRow) => {
     message.info(`Dispatched inquiry to supplier for attribute: ${attr.label}`)
   }
-
-  const columns: ColumnsType<TriageItem> = [
-    {
-      title: 'Article ID',
-      dataIndex: 'articleId',
-      key: 'articleId',
-      width: 110,
-      render: (val: string) => <Text code>{val}</Text>,
-    },
-    {
-      title: 'Buyer Specification',
-      dataIndex: 'buyerArticle',
-      key: 'buyerArticle',
-    },
-    {
-      title: 'Supplier Candidate',
-      dataIndex: 'supplierArticle',
-      key: 'supplierArticle',
-    },
-    {
-      title: 'Equivalence State',
-      key: 'status',
-      width: 220,
-      render: (_, record) => (
-        <EquivalenceBadge
-          status={record.status}
-          score={record.score}
-          deltaScore={record.deltaScore}
-          size="small"
-        />
-      ),
-    },
-  ]
 
   const simulateEnrichment = () => {
     setData((prev) =>
@@ -418,84 +412,77 @@ const App: React.FC = () => {
           </Space>
         </Card>
 
-        {/* Split View: Buyer Triage List + Detail Panel Header */}
-        <Row gutter={[20, 20]}>
-          <Col xs={24} lg={15}>
-            <Card
-              title="Buyer Triage List Rows"
-              size="small"
-              extra={<Tag color="blue">{data.length} Items</Tag>}
-            >
-              <Table
-                columns={columns}
-                dataSource={data}
-                pagination={false}
+        {/* Master-Detail Triage Layout Shell (Hospital Purchaser Workbench) */}
+        <MasterDetailTriageLayout
+          title={
+            <Space align="center">
+              <span>Hospital Purchaser Workbench</span>
+              <Tag color="blue">{data.length} Total Enriched Items</Tag>
+            </Space>
+          }
+          extraHeader={
+            <Space>
+              <Button
+                type="primary"
+                icon={<ThunderboltOutlined />}
+                onClick={simulateEnrichment}
                 size="small"
-                rowSelection={{
-                  type: 'radio',
-                  selectedRowKeys: [selectedKey],
-                  onChange: (keys) => {
-                    if (keys[0]) setSelectedKey(String(keys[0]))
-                  },
-                }}
-              />
-            </Card>
-          </Col>
-
-          {/* Detail Panel Header Showcase */}
-          <Col xs={24} lg={9}>
-            <Card title="Detail Panel Header Preview" size="small">
-              {selectedItem && (
-                <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+              >
+                Simulate Spec Enrichment
+              </Button>
+            </Space>
+          }
+          items={data}
+          selectedId={selectedKey}
+          onSelect={(id) => setSelectedKey(String(id))}
+          statusTabs={STATUS_TABS}
+          renderListItem={(item) => (
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                <Text code style={{ fontSize: 11 }}>{item.articleId}</Text>
+                <EquivalenceBadge status={item.status} score={item.score} deltaScore={item.deltaScore} size="small" />
+              </div>
+              <Text strong style={{ fontSize: 12, display: 'block' }} ellipsis={{ tooltip: item.buyerArticle }}>
+                {item.buyerArticle}
+              </Text>
+              <Text type="secondary" style={{ fontSize: 11, display: 'block', marginTop: 2 }} ellipsis={{ tooltip: item.supplierArticle }}>
+                Candidate: {item.supplierArticle}
+              </Text>
+            </div>
+          )}
+          renderDetailPane={(item) =>
+            item ? (
+              <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
-                    <Text type="secondary" style={{ fontSize: 12 }}>
-                      Detail Panel Header
-                    </Text>
-                    <div style={{ marginTop: 4 }}>
-                      <Title level={4} style={{ margin: 0 }}>
-                        {selectedItem.buyerArticle}
-                      </Title>
-                    </div>
+                    <Text type="secondary" style={{ fontSize: 11 }}>INSPECTION WORKSPACE • {item.articleId}</Text>
+                    <Title level={4} style={{ margin: '2px 0 0 0' }}>{item.buyerArticle}</Title>
                   </div>
+                  <EquivalenceBadge status={item.status} score={item.score} deltaScore={item.deltaScore} size="middle" />
+                </div>
 
-                  <div style={{ background: '#fafafa', padding: 12, borderRadius: 6, border: '1px solid #f0f0f0' }}>
-                    <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 6 }}>
-                      Active Equivalence State
-                    </Text>
-                    <EquivalenceBadge
-                      status={selectedItem.status}
-                      score={selectedItem.score}
-                      deltaScore={selectedItem.deltaScore}
-                      size="middle"
+                <Divider style={{ margin: '8px 0' }} />
+
+                <Row gutter={[16, 16]}>
+                  <Col xs={24} md={12}>
+                    <ArticleSummaryCard
+                      article={SAMPLE_HOSPITAL_ARTICLE}
+                      sourceType="HOSPITAL"
+                      extra={<Tag color="blue">Hospital Internal</Tag>}
                     />
-                  </div>
-
-                  <div>
-                    <Text strong style={{ fontSize: 13 }}>Candidate Spec:</Text>
-                    <Paragraph type="secondary" style={{ marginTop: 4 }}>
-                      {selectedItem.supplierArticle}
-                    </Paragraph>
-                  </div>
-
-                  <Divider style={{ margin: '8px 0' }} />
-
-                  <div>
-                    <Text type="secondary" style={{ fontSize: 12 }}>
-                      Supplier Task Queue Summary Badge
-                    </Text>
-                    <div style={{ marginTop: 6 }}>
-                      <EquivalenceBadge
-                        status={selectedItem.status}
-                        score={selectedItem.score}
-                        size="small"
-                      />
-                    </div>
-                  </div>
-                </Space>
-              )}
-            </Card>
-          </Col>
-        </Row>
+                  </Col>
+                  <Col xs={24} md={12}>
+                    <ArticleSummaryCard
+                      article={SAMPLE_SUPPLIER_ARTICLE}
+                      sourceType="SUPPLIER"
+                      extra={<Tag color="purple">Supplier Catalog</Tag>}
+                    />
+                  </Col>
+                </Row>
+              </Space>
+            ) : null
+          }
+        />
 
         {/* Side-by-Side Buyer Comparison View */}
         <Card

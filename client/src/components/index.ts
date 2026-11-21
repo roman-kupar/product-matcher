@@ -15,3 +15,5 @@ export type { DynamicAttributeInputProps } from './DynamicAttributeInput'
 
 export { ClarificationPacketBuilder, ClarificationRequestForm } from './ClarificationPacketBuilder'
 export type { ClarificationPacketBuilderProps } from './ClarificationPacketBuilder'
+
+export { MasterDetailTriageLayout } from './MasterDetailTriageLayout'
