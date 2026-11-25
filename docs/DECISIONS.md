@@ -99,9 +99,9 @@ The service doesn't talk to a model provider directly. It sends OpenAI-compatibl
 
 This paid off during development, more than I expected:
 
-- **Model deprecation.** Google retired the Gemini model I first configured. Switching was a one-line change in the gateway config.
-- **Unsupported parameter.** The newer Gemini model rejects the `temperature` parameter. The gateway drops unsupported parameters per model (`drop_params`), so the service still sends the same request everywhere.
-- **Provider outage.** Gemini returned "high demand" errors for a while. The gateway retries twice and then falls back to a local model served by Ollama, so the demo keeps working, even offline.
+- **Model deprecation.** The provider retired the hosted model I first configured. Switching was a one-line change in the gateway config.
+- **Unsupported parameter.** Its successor rejects the `temperature` parameter. The gateway drops unsupported parameters per model (`drop_params`), so the service still sends the same request everywhere.
+- **Provider outage.** The hosted provider returned "high demand" errors for a while. The gateway retries twice and then falls back to a local model served by Ollama, so the demo keeps working, even offline.
 
 None of these required a code change. The service also has its own virtual key, which is only allowed to use the assessment models, instead of the gateway's master key.
 

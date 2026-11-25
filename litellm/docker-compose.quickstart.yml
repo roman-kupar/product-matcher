@@ -28,8 +28,10 @@ services:
       LITELLM_SALT_KEY: ${LITELLM_SALT_KEY:?set it in .env - see the header of this file}
       DATABASE_URL: postgresql://litellm:${POSTGRES_PASSWORD:-litellm}@db:5432/litellm
       STORE_MODEL_IN_DB: "True"
-      # Provider key for the "assessment-model" alias in config.yaml (optional for the local model).
-      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      # Hosted model behind "assessment-model" (see config.yaml); defaults to the local model.
+      LLM_PROVIDER_MODEL: ${LLM_PROVIDER_MODEL:-ollama_chat/qwen2.5:1.5b}
+      LLM_PROVIDER_API_KEY: ${LLM_PROVIDER_API_KEY:-none}
+      OLLAMA_API_BASE: http://host.docker.internal:11434
     depends_on:
       db:
         condition: service_healthy
