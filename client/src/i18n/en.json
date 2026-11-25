@@ -63,5 +63,6 @@
   "candidate.colReasoning": "LLM reasoning",
   "candidate.identical": "Identical values (no LLM needed)",
   "candidate.notStated": "Not stated by the supplier",
-  "candidate.codeMismatch": "Different code (exact comparison, no LLM)"
+  "candidate.codeMismatch": "Different code (exact comparison, no LLM)",
+  "demo.viewAs": "Demo · view as"
 }

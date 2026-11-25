@@ -63,5 +63,6 @@
   "candidate.colReasoning": "LLM-Begründung",
   "candidate.identical": "Identische Werte (kein LLM nötig)",
   "candidate.notStated": "Vom Lieferanten nicht angegeben",
-  "candidate.codeMismatch": "Abweichender Code (exakter Vergleich, kein LLM)"
+  "candidate.codeMismatch": "Abweichender Code (exakter Vergleich, kein LLM)",
+  "demo.viewAs": "Demo · Ansicht als"
 }
