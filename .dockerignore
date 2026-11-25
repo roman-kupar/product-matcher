@@ -1,0 +1,9 @@
+# Keep the build context small and secrets out of images.
+**/node_modules
+**/dist
+**/.env
+**/.env.*
+.git
+litellm
+docs
+**/.DS_Store

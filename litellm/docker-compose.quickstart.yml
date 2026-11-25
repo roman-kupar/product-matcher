@@ -50,3 +50,6 @@ services:
 
 volumes:
   postgres_data:
+    # Fixed name, so the standalone gateway and the full stack (root docker-compose.yml)
+    # share the same database, including the service's virtual key.
+    name: litellm_postgres_data

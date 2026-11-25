@@ -1,0 +1,28 @@
+#   docker compose up -d --build        then open http://localhost:8080
+# The gateway (with its Postgres) is defined once in litellm/, and reads litellm/.env.
+include:
+  - litellm/docker-compose.quickstart.yml
+
+services:
+  service:
+    build: { context: ., target: service }
+    # LLM_API_KEY: the virtual key written by litellm/create-service-key.sh.
+    env_file:
+      - path: service/.env
+        required: false
+    environment:
+      # Inside the compose network the gateway is reached by its service name, not localhost.
+      LLM_BASE_URL: http://litellm:4000/v1
+      LLM_MODEL: ${LLM_MODEL:-assessment-model}
+    depends_on:
+      - litellm
+    restart: unless-stopped
+
+  web:
+    build: { context: ., target: web }
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    depends_on:
+      service:
+        condition: service_healthy
+    restart: unless-stopped

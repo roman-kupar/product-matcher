@@ -95,7 +95,7 @@ Adding real authentication would mean putting a check in front of these existing
 
 ## The LLM gateway
 
-The service doesn't talk to a model provider directly. It sends OpenAI-compatible requests to a **LiteLLM gateway** and only knows a model *alias*, `assessment-model`. Which model sits behind the alias is configured in `litellm/config.yaml`.
+The service doesn't talk to a model provider directly. It sends OpenAI-compatible requests to a **LiteLLM gateway** and only knows a model *alias*, `assessment-model`. Which model sits behind the alias is configured in `litellm/config.yaml`. It is also then easy to extend and replace models.
 
 This paid off during development, more than I expected:
 
