@@ -1,0 +1,13 @@
+# Models exposed by the gateway. The service only knows the alias "assessment-model",
+# so switching the underlying model (e.g. to Claude) is a change here, not in code:
+#
+#   - model_name: assessment-model
+#     litellm_params:
+#       model: anthropic/claude-sonnet-4-5
+#       api_key: os.environ/ANTHROPIC_API_KEY
+model_list:
+  - model_name: assessment-model
+    litellm_params:
+      # Local model served by Ollama on the host (`ollama serve`, `ollama pull qwen2.5:1.5b`).
+      model: ollama_chat/qwen2.5:1.5b
+      api_base: http://host.docker.internal:11434

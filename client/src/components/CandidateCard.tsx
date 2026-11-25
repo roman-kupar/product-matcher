@@ -1,8 +1,8 @@
 import { Button, Card, Collapse, Space, Table, Tag, Typography } from 'antd'
-import { ReloadOutlined, SendOutlined } from '@ant-design/icons'
+import { ReloadOutlined, RobotOutlined, SendOutlined } from '@ant-design/icons'
 import { useSettings } from '../i18n/settings'
 import { AttributeStatus, Verdict, type AttributeKey } from '../enums'
-import type { Assessment, CatalogProduct, SupplierQuestion } from '../types'
+import type { Assessment, Candidate } from '../types'
 
 const { Text } = Typography
 
@@ -19,17 +19,18 @@ const STATUS_COLOR: Record<AttributeStatus, string> = {
 }
 
 interface Props {
-  product: CatalogProduct
-  assessment: Assessment
-  questions: SupplierQuestion[]
+  candidate: Candidate
+  /** True while the LLM assessment for this candidate is running. */
+  running: boolean
+  onRunAssessment: () => void
   onAskSupplier: () => void
-  onReRun: () => void
 }
 
-export function CandidateCard({ product, assessment, questions, onAskSupplier, onReRun }: Props) {
-  const { t, language } = useSettings()
-  const { verdict, score, previousScore, rows, assessedAt } = assessment
-  const missing = rows.filter((r) => r.status === AttributeStatus.Missing).map((r) => r.attribute)
+export function CandidateCard({ candidate, running, onRunAssessment, onAskSupplier }: Props) {
+  const { t } = useSettings()
+  const { product, assessment, questions } = candidate
+
+  const missing = assessment?.rows.filter((r) => r.status === AttributeStatus.Missing).map((r) => r.attribute) ?? []
   const unasked = missing.filter((a) => !questions.some((q) => q.attribute === a))
   const open = questions.filter((q) => q.answer === undefined).length
   const answered = questions.filter((q) => q.answer !== undefined && missing.includes(q.attribute)).length
@@ -44,17 +45,22 @@ export function CandidateCard({ product, assessment, questions, onAskSupplier, o
         </Space>
       }
       extra={
-        <Tag color={VERDICT_COLOR[verdict]}>
-          {t(`verdict.${verdict}`)} · {previousScore !== undefined && `${previousScore}% → `}
-          {score}%
-        </Tag>
+        assessment ? (
+          <Tag color={VERDICT_COLOR[assessment.verdict]}>
+            {t(`verdict.${assessment.verdict}`)} ·{' '}
+            {assessment.previousScore !== undefined && `${assessment.previousScore}% → `}
+            {assessment.score}%
+          </Tag>
+        ) : (
+          <Tag>{t('candidate.notAssessed')}</Tag>
+        )
       }
     >
       <Space orientation="vertical" style={{ width: '100%' }}>
         {missing.length > 0 && (
           <Text>{t('candidate.missing', { attributes: missing.map((a) => t(`attr.${a}`)).join(', ') })}</Text>
         )}
-        <Space>
+        <Space wrap>
           {unasked.length > 0 && (
             <Button size="small" type="primary" icon={<SendOutlined />} onClick={onAskSupplier}>
               {t('candidate.ask', { count: unasked.length })}
@@ -62,45 +68,63 @@ export function CandidateCard({ product, assessment, questions, onAskSupplier, o
           )}
           {open > 0 && <Tag color="processing">{t('candidate.waiting', { count: open })}</Tag>}
           {answered > 0 && open === 0 && <Tag color="success">{t('candidate.answered')}</Tag>}
-          <Button size="small" icon={<ReloadOutlined />} onClick={onReRun}>
-            {t('candidate.reRun')}
+          <Button
+            size="small"
+            type={assessment ? 'default' : 'primary'}
+            icon={assessment ? <ReloadOutlined /> : <RobotOutlined />}
+            loading={running}
+            onClick={onRunAssessment}
+          >
+            {t(assessment ? 'candidate.reRun' : 'candidate.run')}
           </Button>
         </Space>
-        <Collapse
-          ghost
-          size="small"
-          items={[
-            {
-              key: 'details',
-              label: t('candidate.details'),
-              children: (
-                <>
-                  <Table
-                    size="small"
-                    pagination={false}
-                    rowKey="attribute"
-                    dataSource={rows}
-                    columns={[
-                      { title: t('candidate.colAttribute'), dataIndex: 'attribute', render: (a: AttributeKey) => t(`attr.${a}`) },
-                      { title: t('candidate.colHospital'), dataIndex: 'required' },
-                      { title: t('candidate.colSupplier'), dataIndex: 'offered', render: (v: string | null) => v ?? '—' },
-                      {
-                        title: '',
-                        dataIndex: 'status',
-                        render: (s: AttributeStatus) => <Tag color={STATUS_COLOR[s]}>{t(`status.${s}`)}</Tag>,
-                      },
-                    ]}
-                  />
-                  <Text type="secondary" style={{ fontSize: 12 }}>
-                    {t('candidate.source', { articleNo: product.articleNo, source: product.source })} ·{' '}
-                    {t('candidate.assessedAt', { time: new Date(assessedAt).toLocaleString(language) })}
-                  </Text>
-                </>
-              ),
-            },
-          ]}
-        />
+        {assessment && <AssessmentDetails assessment={assessment} source={t('candidate.source', { articleNo: product.articleNo, source: product.source })} />}
       </Space>
     </Card>
+  )
+
+}
+
+function AssessmentDetails({ assessment, source }: { assessment: Assessment; source: string }) {
+  const { t, language } = useSettings()
+  return (
+    <Collapse
+      ghost
+      size="small"
+      items={[
+        {
+          key: 'details',
+          label: t('candidate.details'),
+          children: (
+            <>
+              <Table
+                size="small"
+                pagination={false}
+                rowKey="attribute"
+                dataSource={assessment.rows}
+                columns={[
+                  { title: t('candidate.colAttribute'), dataIndex: 'attribute', render: (a: AttributeKey) => t(`attr.${a}`) },
+                  { title: t('candidate.colHospital'), dataIndex: 'required', render: (v: string | null) => v ?? '—' },
+                  { title: t('candidate.colSupplier'), dataIndex: 'offered', render: (v: string | null) => v ?? '—' },
+                  {
+                    title: '',
+                    dataIndex: 'status',
+                    render: (s: AttributeStatus) => <Tag color={STATUS_COLOR[s]}>{t(`status.${s}`)}</Tag>,
+                  },
+                  {
+                    title: t('candidate.colReasoning'),
+                    dataIndex: 'reasoning',
+                    render: (r?: Record<string, string>) => <Text type="secondary">{r?.[language] ?? '—'}</Text>,
+                  },
+                ]}
+              />
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                {source} · {t('candidate.assessedAt', { time: new Date(assessment.assessedAt).toLocaleString(language) })}
+              </Text>
+            </>
+          ),
+        },
+      ]}
+    />
   )
 }

@@ -56,5 +56,9 @@
   "category.needle": "Needle",
   "category.disinfectant": "Disinfectant",
   "category.specimenContainer": "Specimen container",
-  "category.plaster": "Plaster"
+  "category.plaster": "Plaster",
+  "articleStatus.NOT_ASSESSED": "Not assessed",
+  "candidate.notAssessed": "Not assessed",
+  "candidate.run": "Run assessment",
+  "candidate.colReasoning": "LLM reasoning"
 }

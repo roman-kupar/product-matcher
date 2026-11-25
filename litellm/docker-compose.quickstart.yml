@@ -12,6 +12,13 @@
 services:
   litellm:
     image: docker.litellm.ai/berriai/litellm:latest
+    # Model aliases (see config.yaml); models added via the UI are stored in the database as before.
+    command: ["--config", "/app/config.yaml"]
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+    # Lets the container reach Ollama on the host (built into Docker Desktop, needed on Linux).
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       # LITELLM_BIND is empty by default, so this stays "4000:4000". The quickstart
       # script sets it to "127.0.0.1:" so new installs listen on this machine only.

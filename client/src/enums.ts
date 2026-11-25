@@ -56,5 +56,6 @@ export const ArticleStatus = {
   NeedsInfo: 'NEEDS_INFO',
   NoEquivalent: 'NO_EQUIVALENT',
   NoCandidates: 'NO_CANDIDATES',
+  NotAssessed: 'NOT_ASSESSED',
 } as const
 export type ArticleStatus = (typeof ArticleStatus)[keyof typeof ArticleStatus]

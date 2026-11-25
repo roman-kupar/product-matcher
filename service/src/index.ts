@@ -1,6 +1,43 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
-import { assess, type AssessmentInput } from './assessment.ts'
 import { config } from './config.ts'
+import {
+  NotFoundError,
+  answerQuestion,
+  askSupplier,
+  getArticle,
+  listArticles,
+  listSuppliers,
+  runAssessment,
+  supplierQuestions,
+} from './store.ts'
+
+class BadRequestError extends Error {}
+
+type Handler = (params: string[], body: unknown) => unknown
+
+/** Method + path pattern -> handler. Captured path segments are passed as params (URL-decoded). */
+const routes: [method: string, pattern: RegExp, handler: Handler][] = [
+  ['GET', /^\/api\/health$/, () => ({ status: 'ok', uptime: process.uptime() })],
+
+  // Hospital side
+  ['GET', /^\/api\/articles$/, () => listArticles()],
+  ['GET', /^\/api\/articles\/([^/]+)$/, ([id]) => getArticle(id)],
+  ['POST', /^\/api\/articles\/([^/]+)\/candidates\/([^/]+)\/assessment$/, ([id, productId]) => runAssessment(id, productId)],
+  ['POST', /^\/api\/articles\/([^/]+)\/candidates\/([^/]+)\/questions$/, ([id, productId]) => askSupplier(id, productId)],
+
+  // Supplier side
+  ['GET', /^\/api\/suppliers$/, () => listSuppliers()],
+  ['GET', /^\/api\/suppliers\/([^/]+)\/questions$/, ([supplier]) => supplierQuestions(supplier)],
+  [
+    'POST',
+    /^\/api\/suppliers\/([^/]+)\/questions\/([^/]+)\/answer$/,
+    ([supplier, questionId], body) => {
+      const answer = (body as { answer?: unknown } | null)?.answer
+      if (typeof answer !== 'string' || !answer.trim()) throw new BadRequestError('Expected { answer: string }')
+      return answerQuestion(supplier, questionId, answer.trim())
+    },
+  ],
+]
 
 function send(res: ServerResponse, status: number, body: unknown) {
   res.writeHead(status, { 'Content-Type': 'application/json' })
@@ -10,44 +47,30 @@ function send(res: ServerResponse, status: number, body: unknown) {
 async function readJson(req: IncomingMessage): Promise<unknown> {
   const chunks: Buffer[] = []
   for await (const chunk of req) chunks.push(chunk as Buffer)
-  return JSON.parse(Buffer.concat(chunks).toString('utf8'))
-}
-
-const isValues = (v: unknown): v is Record<string, string | null> =>
-  typeof v === 'object' && v !== null && Object.values(v).every((x) => x === null || typeof x === 'string')
-
-function isAssessmentInput(body: unknown): body is AssessmentInput {
-  const { article, product } = (body ?? {}) as Partial<AssessmentInput>
-  return (
-    typeof article?.name === 'string' &&
-    isValues(article.attributes) &&
-    typeof product?.name === 'string' &&
-    typeof product.supplier === 'string' &&
-    isValues(product.attributes)
-  )
+  const text = Buffer.concat(chunks).toString('utf8')
+  if (!text) return null
+  try {
+    return JSON.parse(text)
+  } catch {
+    throw new BadRequestError('Body must be valid JSON')
+  }
 }
 
 const server = createServer(async (req, res) => {
-  const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`)
+  const { pathname } = new URL(req.url ?? '/', 'http://localhost')
 
-  if (url.pathname === '/api/health' && req.method === 'GET') {
-    return send(res, 200, { status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() })
-  }
-
-  if (url.pathname === '/api/assessments' && req.method === 'POST') {
-    let body: unknown
+  for (const [method, pattern, handler] of routes) {
+    const match = req.method === method ? pattern.exec(pathname) : null
+    if (!match) continue
     try {
-      body = await readJson(req)
-    } catch {
-      return send(res, 400, { error: 'Body must be valid JSON' })
-    }
-    if (!isAssessmentInput(body)) return send(res, 400, { error: 'Expected { article, product } with attributes' })
-
-    try {
-      return send(res, 200, await assess(body))
+      const body = method === 'POST' ? await readJson(req) : null
+      return send(res, 200, await handler(match.slice(1).map(decodeURIComponent), body))
     } catch (error) {
-      console.error('[service] Assessment failed:', error)
-      return send(res, 502, { error: 'Assessment failed', detail: error instanceof Error ? error.message : String(error) })
+      if (error instanceof NotFoundError) return send(res, 404, { error: error.message })
+      if (error instanceof BadRequestError) return send(res, 400, { error: error.message })
+      console.error(`[service] ${method} ${pathname} failed:`, error)
+      // Remaining failures come from the LLM call (gateway down, invalid answer, timeout).
+      return send(res, 502, { error: error instanceof Error ? error.message : String(error) })
     }
   }
 

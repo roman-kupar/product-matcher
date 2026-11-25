@@ -56,5 +56,9 @@
   "category.needle": "Kanüle",
   "category.disinfectant": "Desinfektion",
   "category.specimenContainer": "Probenbehälter",
-  "category.plaster": "Pflaster"
+  "category.plaster": "Pflaster",
+  "articleStatus.NOT_ASSESSED": "Nicht bewertet",
+  "candidate.notAssessed": "Nicht bewertet",
+  "candidate.run": "Bewerten",
+  "candidate.colReasoning": "LLM-Begründung"
 }

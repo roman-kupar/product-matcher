@@ -1,4 +1,7 @@
-import type { AttributeKey, AttributeStatus, Category, Verdict } from './enums'
+import type { ArticleStatus, AttributeKey, AttributeStatus, Category, Verdict } from './enums'
+import type { Language } from './i18n/languages'
+
+export type LocalizedText = Record<Language, string>
 
 /** A row of the hospital's article master data (sample-challenge-v01.xlsx). */
 export interface HospitalArticle {
@@ -37,7 +40,14 @@ export interface Assessment {
   previousScore?: number
   /** ISO timestamp, so changes between runs are traceable. */
   assessedAt: string
-  rows: { attribute: AttributeKey; required: string; offered: string | null; status: AttributeStatus }[]
+  rows: {
+    attribute: AttributeKey
+    required: string | null
+    offered: string | null
+    status: AttributeStatus
+    /** LLM explanation, only for attributes the LLM judged. */
+    reasoning?: LocalizedText
+  }[]
 }
 
 export interface SupplierQuestion {
@@ -45,4 +55,29 @@ export interface SupplierQuestion {
   productId: string
   attribute: AttributeKey
   answer?: string
+}
+
+// ---- API responses (see service/src/store.ts) ----
+
+export interface ArticleSummary extends HospitalArticle {
+  status: ArticleStatus
+}
+
+export interface Candidate {
+  product: CatalogProduct
+  assessment: Assessment | null
+  questions: SupplierQuestion[]
+}
+
+export interface ArticleDetail extends ArticleSummary {
+  candidates: Candidate[]
+}
+
+export interface SupplierSummary {
+  name: string
+  openQuestions: number
+}
+
+export interface OpenQuestion extends SupplierQuestion {
+  product: CatalogProduct
 }
