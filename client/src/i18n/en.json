@@ -1,0 +1,51 @@
+{
+  "app.title": "Article Enricher",
+  "app.subtitle": "Find equivalent supplier products and fill in missing data",
+  "view.hospital": "Hospital",
+  "view.supplier": "Supplier ({count})",
+  "settings.dark": "Dark",
+  "settings.light": "Light",
+
+  "article.articleNo": "Art.-No. {value}",
+  "article.details": "Details",
+  "article.orderUnit": "Order unit",
+  "article.orderUnitValue": "{unit} of {count} {baseUnit}",
+  "article.annualQuantity": "Annual quantity",
+  "article.gtin": "GTIN",
+  "article.mdrClass": "MDR class",
+  "article.targetPrice": "Target price",
+  "article.noCandidates": "No matching products in the supplier catalogs",
+
+  "verdict.EQUIVALENT": "Equivalent",
+  "verdict.NEEDS_INFO": "Needs info",
+  "verdict.NOT_EQUIVALENT": "Not equivalent",
+  "status.MATCH": "Match",
+  "status.MISMATCH": "Mismatch",
+  "status.MISSING": "Missing",
+
+  "candidate.missing": "Missing data: {attributes}",
+  "candidate.ask": "Ask supplier ({count})",
+  "candidate.waiting": "Waiting for supplier ({count})",
+  "candidate.answered": "Supplier answered, re-run to update",
+  "candidate.reRun": "Re-run assessment",
+  "candidate.details": "Details",
+  "candidate.colAttribute": "Attribute",
+  "candidate.colHospital": "Hospital",
+  "candidate.colSupplier": "Supplier",
+  "candidate.source": "Art.-No. {articleNo} · Source: {source}",
+
+  "supplier.empty": "No open questions. Ask a supplier from the hospital view first.",
+  "supplier.question": "What is the {attribute} of {product} (Art.-No. {articleNo})?",
+  "supplier.submit": "Submit",
+
+  "msg.questionsSent": "{count} question(s) sent to {supplier}",
+  "msg.answerSaved": "Answer saved to supplier catalog",
+
+  "attr.volume": "Volume",
+  "attr.connector": "Connector",
+  "attr.sterile": "Sterile",
+  "attr.packSize": "Pack size",
+  "attr.mdrClass": "MDR class",
+  "attr.size": "Size (Ø × length)",
+  "attr.gauge": "Gauge"
+}

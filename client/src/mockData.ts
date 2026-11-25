@@ -16,8 +16,8 @@ export const HOSPITAL_ARTICLES: HospitalArticle[] = [
 
 /** Attributes the LLM would extract from the hospital record (name + master data). */
 export const REQUIREMENTS: Record<string, Attributes> = {
-  '3': { Volume: '10 ml', Connector: 'Luer-Lock', Sterile: 'Yes', 'Pack size': '100', 'MDR class': 'IIa' },
-  '6': { 'Size (Ø × length)': '0,8 × 40 mm', Gauge: '21 G', Sterile: 'Yes', 'Pack size': '100', 'MDR class': 'IIa' },
+  '3': { volume: '10 ml', connector: 'Luer-Lock', sterile: 'Yes', packSize: '100', mdrClass: 'IIa' },
+  '6': { size: '0,8 × 40 mm', gauge: '21 G', sterile: 'Yes', packSize: '100', mdrClass: 'IIa' },
 }
 
 // From client/public/product_catalog_01.pdf (B. Braun) and product_catalog_02.pdf (BD)
@@ -25,21 +25,21 @@ export const CATALOG_PRODUCTS: CatalogProduct[] = [
   {
     id: 'bb-4617100V', hospitalArticleId: '3', supplier: 'B. Braun', name: 'Omnifix® Luer Lock Solo 10 ml', articleNo: '4617100V',
     source: 'product_catalog_01.pdf, p. 16',
-    attributes: { Volume: '10 ml', Connector: 'Luer-Lock', Sterile: 'Yes', 'Pack size': '100', 'MDR class': null },
+    attributes: { volume: '10 ml', connector: 'Luer-Lock', sterile: 'Yes', packSize: '100', mdrClass: null },
   },
   {
     id: 'bd-300912', hospitalArticleId: '3', supplier: 'BD', name: 'BD Plastipak™ Luer-Lok™ 10 ml', articleNo: '300912',
     source: 'product_catalog_02.pdf, p. 13',
-    attributes: { Volume: '10 ml', Connector: 'Luer-Lock', Sterile: 'Yes', 'Pack size': '100', 'MDR class': null },
+    attributes: { volume: '10 ml', connector: 'Luer-Lock', sterile: 'Yes', packSize: '100', mdrClass: null },
   },
   {
     id: 'bb-4657527B', hospitalArticleId: '6', supplier: 'B. Braun', name: 'Sterican® 21 G × 1½"', articleNo: '4657527B',
     source: 'product_catalog_01.pdf, p. 49',
-    attributes: { 'Size (Ø × length)': '0,8 × 40 mm', Gauge: '21 G', Sterile: 'Yes', 'Pack size': '100', 'MDR class': null },
+    attributes: { size: '0,8 × 40 mm', gauge: '21 G', sterile: 'Yes', packSize: '100', mdrClass: null },
   },
   {
     id: 'bd-304432', hospitalArticleId: '6', supplier: 'BD', name: 'BD Microlance™ 21 G 1½" Nr. 2', articleNo: '304432',
     source: 'product_catalog_02.pdf, p. 6',
-    attributes: { 'Size (Ø × length)': '0,8 × 40 mm', Gauge: '21 G', Sterile: 'Yes', 'Pack size': '100', 'MDR class': null },
+    attributes: { size: '0,8 × 40 mm', gauge: '21 G', sterile: 'Yes', packSize: '100', mdrClass: null },
   },
 ]

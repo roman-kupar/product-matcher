@@ -1,0 +1,51 @@
+{
+  "app.title": "Article Enricher",
+  "app.subtitle": "Gleichwertige Lieferantenprodukte finden und fehlende Daten ergänzen",
+  "view.hospital": "Spital",
+  "view.supplier": "Lieferant ({count})",
+  "settings.dark": "Dunkel",
+  "settings.light": "Hell",
+
+  "article.articleNo": "Art.-Nr. {value}",
+  "article.details": "Details",
+  "article.orderUnit": "Bestellmengeneinheit",
+  "article.orderUnitValue": "{unit} à {count} {baseUnit}",
+  "article.annualQuantity": "Jahresmenge",
+  "article.gtin": "GTIN",
+  "article.mdrClass": "MDR-Klasse",
+  "article.targetPrice": "Netto-Zielpreis",
+  "article.noCandidates": "Keine passenden Produkte in den Lieferantenkatalogen",
+
+  "verdict.EQUIVALENT": "Gleichwertig",
+  "verdict.NEEDS_INFO": "Infos fehlen",
+  "verdict.NOT_EQUIVALENT": "Nicht gleichwertig",
+  "status.MATCH": "Übereinstimmung",
+  "status.MISMATCH": "Abweichung",
+  "status.MISSING": "Fehlt",
+
+  "candidate.missing": "Fehlende Daten: {attributes}",
+  "candidate.ask": "Lieferant fragen ({count})",
+  "candidate.waiting": "Warte auf Lieferant ({count})",
+  "candidate.answered": "Lieferant hat geantwortet, neu bewerten",
+  "candidate.reRun": "Neu bewerten",
+  "candidate.details": "Details",
+  "candidate.colAttribute": "Merkmal",
+  "candidate.colHospital": "Spital",
+  "candidate.colSupplier": "Lieferant",
+  "candidate.source": "Art.-Nr. {articleNo} · Quelle: {source}",
+
+  "supplier.empty": "Keine offenen Fragen. Fragen Sie zuerst in der Spitalansicht einen Lieferanten an.",
+  "supplier.question": "Was ist der Wert für „{attribute}“ bei {product} (Art.-Nr. {articleNo})?",
+  "supplier.submit": "Absenden",
+
+  "msg.questionsSent": "{count} Frage(n) an {supplier} gesendet",
+  "msg.answerSaved": "Antwort im Lieferantenkatalog gespeichert",
+
+  "attr.volume": "Volumen",
+  "attr.connector": "Anschluss",
+  "attr.sterile": "Steril",
+  "attr.packSize": "Packungsgrösse",
+  "attr.mdrClass": "MDR-Klasse",
+  "attr.size": "Grösse (Ø × Länge)",
+  "attr.gauge": "Gauge"
+}

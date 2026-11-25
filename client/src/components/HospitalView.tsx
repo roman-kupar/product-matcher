@@ -1,5 +1,6 @@
 import { Collapse, Descriptions, Empty, Menu, Space, Typography } from 'antd'
 import { CandidateCard } from './CandidateCard'
+import { useSettings } from '../i18n/settings'
 import type { Assessment, CatalogProduct, HospitalArticle, SupplierQuestion } from '../types'
 
 const { Title, Text } = Typography
@@ -16,6 +17,7 @@ interface Props {
 }
 
 export function HospitalView({ articles, selectedId, onSelect, products, assessments, questions, onAskSupplier, onReRun }: Props) {
+  const { t } = useSettings()
   const article = articles.find((a) => a.id === selectedId)
   const candidates = products.filter((p) => p.hospitalArticleId === selectedId)
 
@@ -32,23 +34,23 @@ export function HospitalView({ articles, selectedId, onSelect, products, assessm
         <Space orientation="vertical" size="middle" style={{ flex: 1, minWidth: 0 }}>
           <div>
             <Title level={4} style={{ margin: 0 }}>{article.name}</Title>
-            <Text type="secondary">{article.brand} · Art.-Nr. {article.articleNo}</Text>
+            <Text type="secondary">{article.brand} · {t('article.articleNo', { value: article.articleNo })}</Text>
             <Collapse
               ghost
               size="small"
               items={[
                 {
                   key: 'master',
-                  label: 'Details',
+                  label: t('article.details'),
                   children: (
                     <Descriptions size="small" column={2} bordered>
-                      <Descriptions.Item label="Order unit">
-                        {article.orderUnit} of {article.unitsPerOrderUnit} {article.baseUnit}
+                      <Descriptions.Item label={t('article.orderUnit')}>
+                        {t('article.orderUnitValue', { unit: article.orderUnit, count: article.unitsPerOrderUnit, baseUnit: article.baseUnit })}
                       </Descriptions.Item>
-                      <Descriptions.Item label="Annual quantity">{article.annualQuantity}</Descriptions.Item>
-                      <Descriptions.Item label="GTIN">{article.gtin}</Descriptions.Item>
-                      <Descriptions.Item label="MDR class">{article.mdrClass}</Descriptions.Item>
-                      <Descriptions.Item label="Target price">
+                      <Descriptions.Item label={t('article.annualQuantity')}>{article.annualQuantity}</Descriptions.Item>
+                      <Descriptions.Item label={t('article.gtin')}>{article.gtin}</Descriptions.Item>
+                      <Descriptions.Item label={t('article.mdrClass')}>{article.mdrClass}</Descriptions.Item>
+                      <Descriptions.Item label={t('article.targetPrice')}>
                         {article.targetPrice} {article.currency}
                       </Descriptions.Item>
                     </Descriptions>
@@ -58,7 +60,7 @@ export function HospitalView({ articles, selectedId, onSelect, products, assessm
             />
           </div>
 
-          {candidates.length === 0 && <Empty description="No matching products in the supplier catalogs" />}
+          {candidates.length === 0 && <Empty description={t('article.noCandidates')} />}
           {candidates.map((product) => (
             <CandidateCard
               key={product.id}

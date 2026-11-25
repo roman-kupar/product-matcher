@@ -14,8 +14,10 @@ export interface HospitalArticle {
   currency: string
 }
 
-/** Attribute name -> value. `null` means the source does not state it. */
-export type Attributes = Record<string, string | null>
+export type AttributeKey = 'volume' | 'connector' | 'sterile' | 'packSize' | 'mdrClass' | 'size' | 'gauge'
+
+/** Attribute -> value. `null` means the source does not state it. */
+export type Attributes = Partial<Record<AttributeKey, string | null>>
 
 /** A product from a supplier catalog (product_catalog_*.pdf). */
 export interface CatalogProduct {
@@ -35,13 +37,12 @@ export interface Assessment {
   verdict: Verdict
   score: number
   previousScore?: number
-  rows: { attribute: string; required: string; offered: string | null; status: AttributeStatus }[]
+  rows: { attribute: AttributeKey; required: string; offered: string | null; status: AttributeStatus }[]
 }
 
 export interface SupplierQuestion {
   id: string
   productId: string
-  attribute: string
-  text: string
+  attribute: AttributeKey
   answer?: string
 }

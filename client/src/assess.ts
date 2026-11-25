@@ -1,4 +1,4 @@
-import type { Assessment, Attributes, CatalogProduct } from './types'
+import type { Assessment, AttributeKey, Attributes, CatalogProduct } from './types'
 
 const normalize = (value: string) => value.trim().toLowerCase()
 
@@ -7,7 +7,7 @@ const normalize = (value: string) => value.trim().toLowerCase()
  * Will be replaced by a server-side LLM call.
  */
 export function assess(requirements: Attributes, product: CatalogProduct): Assessment {
-  const rows = Object.entries(requirements).map(([attribute, required]) => {
+  const rows = (Object.entries(requirements) as [AttributeKey, string | null][]).map(([attribute, required]) => {
     const offered = product.attributes[attribute] ?? null
     const status =
       offered === null ? 'MISSING' : normalize(offered) === normalize(required ?? '') ? 'MATCH' : 'MISMATCH'
@@ -23,6 +23,3 @@ export function assess(requirements: Attributes, product: CatalogProduct): Asses
 
   return { verdict, score: Math.round((matches / rows.length) * 100), rows }
 }
-
-export const questionFor = (attribute: string, product: CatalogProduct) =>
-  `What is the ${attribute.toLowerCase()} of ${product.name} (Art.-Nr. ${product.articleNo})?`
