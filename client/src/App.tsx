@@ -1,97 +1,81 @@
-import React, { useState, useCallback } from 'react'
-import { Space, Typography, Button } from 'antd'
-import { ThunderboltOutlined } from '@ant-design/icons'
-import { useTriageWorkflow, useClarificationWorkflow } from './hooks'
-import type { DynamicInputValue } from './types'
-import {
-  StatusPaletteSection,
-  WorkbenchSection,
-  ComparisonSection,
-  AttributeDiffSection,
-  SupplierReferenceSection,
-  DynamicInputSection,
-  ClarificationSection,
-  AuditTimelineSection,
-} from './sections'
+import { useState } from 'react'
+import { Segmented, Typography, message } from 'antd'
+import { HospitalView } from './components/HospitalView'
+import { SupplierView } from './components/SupplierView'
+import { assess, questionFor } from './assess'
+import { CATALOG_PRODUCTS, HOSPITAL_ARTICLES, REQUIREMENTS } from './mockData'
+import type { Assessment, CatalogProduct, SupplierQuestion } from './types'
 
-const { Title, Paragraph } = Typography
+const { Title, Text } = Typography
 
-const App: React.FC = () => {
-  const triage = useTriageWorkflow()
-  const clarification = useClarificationWorkflow()
+const assessProduct = (product: CatalogProduct) => assess(REQUIREMENTS[product.hospitalArticleId], product)
 
-  const [isReadOnlyDiff, setIsReadOnlyDiff] = useState(false)
-  const [formValues, setFormValues] = useState<Record<string, DynamicInputValue>>({
-    latex_free: true,
-    cuff_length: { value: 290, unit: 'mm' },
-    iso_certification: 'EN 455-1/-2/-3',
-    packaging_carton_code: '',
-  })
+export default function App() {
+  const [view, setView] = useState<'HOSPITAL' | 'SUPPLIER'>('HOSPITAL')
+  const [selectedId, setSelectedId] = useState('3')
+  const [products, setProducts] = useState(CATALOG_PRODUCTS)
+  const [assessments, setAssessments] = useState<Record<string, Assessment>>(() =>
+    Object.fromEntries(CATALOG_PRODUCTS.map((p) => [p.id, assessProduct(p)])),
+  )
+  const [questions, setQuestions] = useState<SupplierQuestion[]>([])
 
-  const handleFormValueChange = useCallback((key: string, value: DynamicInputValue) => {
-    setFormValues((prev) => ({ ...prev, [key]: value }))
-  }, [])
+  const askSupplier = (productId: string) => {
+    const product = products.find((p) => p.id === productId)!
+    const missing = assessments[productId].rows.filter(
+      (r) => r.status === 'MISSING' && !questions.some((q) => q.productId === productId && q.attribute === r.attribute),
+    )
+    setQuestions((prev) => [
+      ...prev,
+      ...missing.map((r) => ({ id: `${productId}:${r.attribute}`, productId, attribute: r.attribute, text: questionFor(r.attribute, product) })),
+    ])
+    message.success(`${missing.length} question(s) sent to ${product.supplier}`)
+  }
 
-  const handleSupplierSubmit = useCallback(() => {
-    clarification.handleSupplierPacketSubmit(() => {
-      triage.updateItemStatus('3', { status: 'RE_EVALUATED', score: 95, deltaScore: 33 })
-    })
-  }, [clarification, triage])
+  const answer = (questionId: string, value: string) => {
+    const question = questions.find((q) => q.id === questionId)!
+    setQuestions((prev) => prev.map((q) => (q.id === questionId ? { ...q, answer: value } : q)))
+    setProducts((prev) =>
+      prev.map((p) => (p.id === question.productId ? { ...p, attributes: { ...p.attributes, [question.attribute]: value } } : p)),
+    )
+    message.success('Answer saved to supplier catalog')
+  }
+
+  const reRun = (productId: string) => {
+    const next = assessProduct(products.find((p) => p.id === productId)!)
+    setAssessments((prev) => ({ ...prev, [productId]: { ...next, previousScore: prev[productId].score } }))
+  }
 
   return (
     <div style={{ maxWidth: 1180, margin: '32px auto', padding: '0 24px' }}>
-      <Space direction="vertical" size="large" style={{ width: '100%' }}>
-        <header>
-          <Space align="center" style={{ justifyContent: 'space-between', width: '100%' }}>
-            <div>
-              <Title level={3} style={{ margin: 0 }}>Article Enricher Triage</Title>
-              <Paragraph type="secondary" style={{ margin: '4px 0 0' }}>
-                Automated matching & spec enrichment verification
-              </Paragraph>
-            </div>
-            <Button type="primary" icon={<ThunderboltOutlined />} onClick={triage.simulateEnrichment}>
-              Simulate Spec Enrichment
-            </Button>
-          </Space>
-        </header>
-
-        <StatusPaletteSection />
-
-        <WorkbenchSection
-          items={triage.items}
-          selectedId={triage.selectedId}
-          onSelect={triage.setSelectedId}
-          onSimulateEnrichment={triage.simulateEnrichment}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <div>
+          <Title level={3} style={{ margin: 0 }}>Article Enricher</Title>
+          <Text type="secondary">Find equivalent supplier products and fill in missing data</Text>
+        </div>
+        <Segmented
+          value={view}
+          onChange={setView}
+          options={[
+            { label: 'Hospital', value: 'HOSPITAL' },
+            { label: `Supplier (${questions.filter((q) => q.answer === undefined).length})`, value: 'SUPPLIER' },
+          ]}
         />
+      </div>
 
-        <ComparisonSection />
-
-        <AttributeDiffSection
-          isReadOnly={isReadOnlyDiff}
-          onReadOnlyChange={setIsReadOnlyDiff}
-          onSelectMissing={triage.handleSelectMissing}
+      {view === 'HOSPITAL' ? (
+        <HospitalView
+          articles={HOSPITAL_ARTICLES}
+          selectedId={selectedId}
+          onSelect={setSelectedId}
+          products={products}
+          assessments={assessments}
+          questions={questions}
+          onAskSupplier={askSupplier}
+          onReRun={reRun}
         />
-
-        <SupplierReferenceSection />
-
-        <DynamicInputSection
-          formValues={formValues}
-          onFormValueChange={handleFormValueChange}
-        />
-
-        <ClarificationSection
-          mode={clarification.packetMode}
-          onModeChange={clarification.setPacketMode}
-          activePacket={clarification.activePacket}
-          isSubmitting={clarification.isPacketSubmitting}
-          onDispatch={clarification.handleDispatchPacket}
-          onSubmit={handleSupplierSubmit}
-        />
-
-        <AuditTimelineSection />
-      </Space>
+      ) : (
+        <SupplierView questions={questions} products={products} onAnswer={answer} />
+      )}
     </div>
   )
 }
-
-export default App
