@@ -28,73 +28,49 @@ export interface Assessment {
 }
 
 const SYSTEM_PROMPT = `You are a procurement expert for hospital medical consumables.
-For each attribute, decide whether the supplier value is functionally equivalent to the hospital requirement.
+Decide whether the supplier value of one attribute is functionally equivalent to the hospital requirement.
 Treat spelling variants, brand-specific names and equal values in other notation as MATCH (e.g. "Luer-Lok" = "Luer-Lock").
 The manufacturer does not matter.
-Return exactly one row per given attribute, with a short reasoning (under 20 words) in English and German.`
+Catalog abbreviations: VE = Verpackungseinheit (sales unit, this is the pack size), UK = Umkarton (outer carton of several VE),
+G = Gauge, Stück/Stk = pieces.
+First copy hospitalValue and supplierValue character for character from the input, then compare only those values.
+Give a short reasoning (under 20 words) in English and German, then the status.`
 
 const text = { type: 'string' }
 
-/** Output shape the model is constrained to. */
+/** Output shape the model is constrained to: one judgement for one attribute. */
 const JUDGEMENT_SCHEMA = {
   name: 'attribute_judgement',
   schema: {
     type: 'object',
     additionalProperties: false,
-    required: ['rows'],
+    // Field order is the order the model writes in: quote both values, explain, then decide.
+    required: ['hospitalValue', 'supplierValue', 'reasoning', 'status'],
     properties: {
-      rows: {
-        type: 'array',
-        items: {
-          type: 'object',
-          additionalProperties: false,
-          // Reasoning comes before status, so the model decides after explaining.
-          required: ['attribute', 'reasoning', 'status'],
-          properties: {
-            attribute: text,
-            reasoning: {
-              type: 'object',
-              additionalProperties: false,
-              required: ['en', 'de'],
-              properties: { en: text, de: text },
-            },
-            status: { type: 'string', enum: ['MATCH', 'MISMATCH'] },
-          },
-        },
-      },
+      hospitalValue: text,
+      supplierValue: text,
+      reasoning: { type: 'object', additionalProperties: false, required: ['en', 'de'], properties: { en: text, de: text } },
+      status: { type: 'string', enum: ['MATCH', 'MISMATCH'] },
     },
   },
 }
 
-const normalize = (value: string) => value.trim().toLowerCase()
+/** Case- and whitespace-insensitive form, used for identical-value checks and quote verification. */
+const normalize = (value: string) => value.trim().replace(/\s+/g, ' ').toLowerCase()
 
 /**
  * Clear cases are decided in code: no value -> MISSING, identical value -> MATCH.
- * Only attributes whose values differ are sent to the LLM for judgement.
+ * Every other attribute is judged by the LLM in its own call (all calls run in parallel).
  */
 export async function assess(input: AssessmentInput): Promise<Assessment> {
-  const toJudge: AssessmentRow[] = []
-  const rows: AssessmentRow[] = Object.entries(input.article.attributes).map(([attribute, required]) => {
-    const offered = input.product.attributes[attribute] ?? null
-    if (offered === null) return { attribute, required, offered, status: 'MISSING' }
-    const row: AssessmentRow = { attribute, required, offered, status: 'MATCH' }
-    if (required !== null && normalize(required) !== normalize(offered)) toJudge.push(row)
-    return row
-  })
-
-  if (toJudge.length > 0) {
-    const prompt = JSON.stringify({
-      hospitalArticle: input.article.name,
-      supplierProduct: `${input.product.name} (${input.product.supplier})`,
-      attributes: toJudge.map(({ attribute, required, offered }) => ({ attribute, required, offered })),
-    })
-    const judged = parseJudgement(await completeJson(SYSTEM_PROMPT, prompt, JUDGEMENT_SCHEMA))
-    for (const row of toJudge) {
-      const verdict = judged.get(row.attribute)
-      if (!verdict) throw new Error(`LLM did not judge attribute "${row.attribute}"`)
-      Object.assign(row, verdict)
-    }
-  }
+  const rows: AssessmentRow[] = await Promise.all(
+    Object.entries(input.article.attributes).map(async ([attribute, required]): Promise<AssessmentRow> => {
+      const offered = input.product.attributes[attribute] ?? null
+      if (offered === null) return { attribute, required, offered, status: 'MISSING' }
+      if (required === null || normalize(required) === normalize(offered)) return { attribute, required, offered, status: 'MATCH' }
+      return { attribute, required, offered, ...(await judge(attribute, required, offered)) }
+    }),
+  )
 
   const has = (status: AttributeStatus) => rows.some((r) => r.status === status)
   const matches = rows.filter((r) => r.status === 'MATCH').length
@@ -106,22 +82,35 @@ export async function assess(input: AssessmentInput): Promise<Assessment> {
   }
 }
 
-/** Validates the LLM answer instead of trusting it; anything malformed is rejected. */
-function parseJudgement(answer: unknown): Map<string, { status: AttributeStatus; reasoning: LocalizedText }> {
-  const rows = (answer as { rows?: unknown })?.rows
-  if (!Array.isArray(rows)) throw new Error('LLM answer has no "rows" array')
+/**
+ * Asks the LLM about a single attribute and validates the answer instead of trusting it.
+ * Grounding: the model must quote both values first, and the quotes must match the input,
+ * so a judgement based on a misread value (e.g. "both say IIa") is rejected.
+ */
+async function judge(
+  attribute: string,
+  required: string,
+  offered: string,
+): Promise<{ status: AttributeStatus; reasoning: LocalizedText }> {
+  // Only the two values are sent, under the same names the answer must quote them with.
+  const prompt = JSON.stringify({ attribute, hospitalValue: required, supplierValue: offered })
+  const answer = (await completeJson(SYSTEM_PROMPT, prompt, JUDGEMENT_SCHEMA)) as Record<string, unknown> | null
+  const reasoning = answer?.reasoning as Partial<LocalizedText> | undefined
 
-  const result = new Map<string, { status: AttributeStatus; reasoning: LocalizedText }>()
-  for (const row of rows as Record<string, unknown>[]) {
-    const reasoning = row.reasoning as Partial<LocalizedText> | undefined
-    if (
-      typeof row.attribute === 'string' &&
-      (row.status === 'MATCH' || row.status === 'MISMATCH') &&
-      typeof reasoning?.en === 'string' &&
-      typeof reasoning.de === 'string'
-    ) {
-      result.set(row.attribute, { status: row.status, reasoning: { en: reasoning.en, de: reasoning.de } })
-    }
+  if (
+    (answer?.status !== 'MATCH' && answer?.status !== 'MISMATCH') ||
+    typeof reasoning?.en !== 'string' ||
+    typeof reasoning.de !== 'string'
+  ) {
+    throw new Error(`LLM returned an invalid judgement for "${attribute}"`)
   }
-  return result
+  const quotes = { hospital: answer.hospitalValue, supplier: answer.supplierValue }
+  if (!isQuoteOf(quotes.hospital, required) || !isQuoteOf(quotes.supplier, offered)) {
+    throw new Error(
+      `LLM misquoted the values for "${attribute}": got ${JSON.stringify(quotes)}, expected ${JSON.stringify({ hospital: required, supplier: offered })}`,
+    )
+  }
+  return { status: answer.status, reasoning: { en: reasoning.en, de: reasoning.de } }
 }
+
+const isQuoteOf = (quote: unknown, value: string) => typeof quote === 'string' && normalize(quote) === normalize(value)

@@ -1,6 +1,6 @@
 /* Generated from given product catalogs */
 
-import type { CatalogProduct, HospitalArticle, Values } from './types.ts'
+import type { CatalogProduct, HospitalArticle, SupplierQuestion, Values } from './types.ts'
 
 // Generated from sample-challenge-v01.xlsx
 export const HOSPITAL_ARTICLES: HospitalArticle[] = [
@@ -28,26 +28,33 @@ export const REQUIREMENTS: Record<string, Values> = {
   '6': { size: '0,8 × 40 mm', gauge: '21 G', sterile: 'Yes', packSize: '100', mdrClass: 'IIa' },
 }
 
+// Attribute values are quoted as written in the catalogs (the LLM judges them against the requirements).
 // From client/public/product_catalog_01.pdf (B. Braun) and product_catalog_02.pdf (BD)
 export const CATALOG_PRODUCTS: CatalogProduct[] = [
   {
     id: 'bb-4617100V', category: 'syringe', supplier: 'B. Braun', name: 'Omnifix® Luer Lock Solo 10 ml', articleNo: '4617100V',
     source: 'product_catalog_01.pdf, p. 16',
-    attributes: { volume: '10 ml', connector: 'Luer-Lock', sterile: 'Yes', packSize: '100', mdrClass: null },
+    attributes: { volume: '10 ml, nutzbar bis 12 ml', connector: 'Luer-Lock-Ansatz', sterile: 'Einzeln steril verpackt', packSize: 'Packung zu 100 Stück', mdrClass: null },
   },
   {
     id: 'bd-300912', category: 'syringe', supplier: 'BD', name: 'BD Plastipak™ Luer-Lok™ 10 ml', articleNo: '300912',
     source: 'product_catalog_02.pdf, p. 13',
-    attributes: { volume: '10 ml', connector: 'Luer-Lock', sterile: 'Yes', packSize: '100', mdrClass: null },
+    attributes: { volume: '10 ml', connector: 'BD Luer-Lok™-Ansatz', sterile: 'Sterile Einzelverpackung', packSize: 'VE 100 / UK 400', mdrClass: null },
   },
   {
     id: 'bb-4657527B', category: 'needle', supplier: 'B. Braun', name: 'Sterican® 21 G × 1½"', articleNo: '4657527B',
     source: 'product_catalog_01.pdf, p. 49',
-    attributes: { size: '0,8 × 40 mm', gauge: '21 G', sterile: 'Yes', packSize: '100', mdrClass: null },
+    attributes: { size: '0,80 mm x 40 mm', gauge: '21 G x 1 ½"', sterile: 'Einzeln steril verpackt', packSize: 'Packung zu 100 Stück', mdrClass: 'IIa' },
   },
   {
     id: 'bd-304432', category: 'needle', supplier: 'BD', name: 'BD Microlance™ 21 G 1½" Nr. 2', articleNo: '304432',
     source: 'product_catalog_02.pdf, p. 6',
-    attributes: { size: '0,8 × 40 mm', gauge: '21 G', sterile: 'Yes', packSize: '100', mdrClass: null },
+    attributes: { size: '0,8 x 40 mm', gauge: '21 G 1 1/2" – Nr. 2', sterile: 'Sterile Einzelverpackung, Einmalgebrauch', packSize: 'VE 100 / UK 5.000', mdrClass: null },
   },
 ]
+
+/**
+ * An earlier round of the loop: B. Braun already answered the MDR class of Sterican (the PDFs state no MDR class).
+ * Its value is written into the product above, exactly as answering a question does at runtime.
+ */
+export const SEED_QUESTIONS: SupplierQuestion[] = [{ id: 'bb-4657527B:mdrClass', productId: 'bb-4657527B', attribute: 'mdrClass', answer: 'IIa' }]

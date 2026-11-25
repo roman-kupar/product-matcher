@@ -1,5 +1,5 @@
 import { assess, type Assessment } from './assessment.ts'
-import { CATALOG_PRODUCTS, CATEGORY_ATTRIBUTES, HOSPITAL_ARTICLES, REQUIREMENTS } from './seed.ts'
+import { CATALOG_PRODUCTS, CATEGORY_ATTRIBUTES, HOSPITAL_ARTICLES, REQUIREMENTS, SEED_QUESTIONS } from './seed.ts'
 import type { ArticleStatus, CatalogProduct, HospitalArticle, SupplierQuestion } from './types.ts'
 
 export interface StoredAssessment extends Assessment {
@@ -13,7 +13,7 @@ export interface StoredAssessment extends Assessment {
 const articles: HospitalArticle[] = structuredClone(HOSPITAL_ARTICLES)
 const products: CatalogProduct[] = structuredClone(CATALOG_PRODUCTS)
 const assessments = new Map<string, StoredAssessment>()
-const questions: SupplierQuestion[] = []
+const questions: SupplierQuestion[] = structuredClone(SEED_QUESTIONS)
 
 export class NotFoundError extends Error {}
 
