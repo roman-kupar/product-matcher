@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# Creates a LiteLLM virtual key that may only use "assessment-model" and writes the
+# Creates a LiteLLM virtual key limited to the assessment-model aliases and writes the
 # service's LLM settings to service/.env. The key is never printed.
 #
 #   sh litellm/create-service-key.sh      (from the repo root, with the gateway running)
@@ -11,11 +11,17 @@ if [ -e service/.env ]; then
   exit 1
 fi
 
+# The gateway needs a few seconds after (re)start.
+for _ in $(seq 1 30); do
+  curl -sf -m 2 http://localhost:4000/health/readiness >/dev/null && break
+  sleep 2
+done
+
 MASTER_KEY=$(grep -E '^LITELLM_MASTER_KEY=' litellm/.env | cut -d= -f2-)
 RESPONSE=$(curl -sf -m 15 http://localhost:4000/key/generate \
   -H "Authorization: Bearer $MASTER_KEY" \
   -H 'Content-Type: application/json' \
-  -d '{"models":["assessment-model"],"key_alias":"article-enricher-service"}') || {
+  -d '{"models":["assessment-model","assessment-model-local"],"key_alias":"article-enricher-service"}') || {
   echo "Gateway request failed. Is it running (docker compose -f litellm/docker-compose.quickstart.yml up -d)?" >&2
   exit 1
 }

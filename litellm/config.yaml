@@ -1,13 +1,26 @@
-# Models exposed by the gateway. The service only knows the alias "assessment-model",
-# so switching the underlying model (e.g. to Claude) is a change here, not in code:
-#
-#   - model_name: assessment-model
-#     litellm_params:
-#       model: anthropic/claude-sonnet-4-5
-#       api_key: os.environ/ANTHROPIC_API_KEY
+# Models exposed by the gateway. The service only knows the alias it is configured with
+# (LLM_MODEL), so switching the underlying model is a change here, not in code.
+litellm_settings:
+  # Silently drop request parameters a model does not support (e.g. Gemini 3.x rejects `temperature`),
+  # so the service can send the same request to every model.
+  drop_params: true
+  # Provider hiccups (e.g. Gemini 503 "high demand") are retried before failing.
+  num_retries: 2
+
+router_settings:
+  # If Gemini stays unavailable, answer with the local model instead of failing the request.
+  fallbacks: [{ "assessment-model": ["assessment-model-local"] }]
+
 model_list:
+  # Default: Google Gemini. The key comes from GEMINI_API_KEY in litellm/.env.
   - model_name: assessment-model
     litellm_params:
-      # Local model served by Ollama on the host (`ollama serve`, `ollama pull qwen2.5:1.5b`).
+      model: gemini/gemini-3.8-flash
+      api_key: os.environ/GEMINI_API_KEY
+
+  # Offline alternative: a local model served by Ollama on the host
+  # (`ollama serve`, `ollama pull qwen2.5:1.5b`). Use with LLM_MODEL=assessment-model-local.
+  - model_name: assessment-model-local
+    litellm_params:
       model: ollama_chat/qwen2.5:1.5b
       api_base: http://host.docker.internal:11434
