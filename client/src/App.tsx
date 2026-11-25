@@ -2,34 +2,39 @@ import { useState } from 'react'
 import { App as AntdApp, Segmented, Space, Typography, theme } from 'antd'
 import { HospitalView } from './components/HospitalView'
 import { SupplierView } from './components/SupplierView'
-import { assess } from './assess'
+import { assess, assessmentKey, findCandidates } from './assess'
 import { AttributeStatus, View } from './enums'
 import { LANGUAGES, type Language } from './i18n/languages'
 import { useSettings } from './i18n/settings'
 import { THEMES, type ThemeMode } from './theme/themes'
-import { CATALOG_PRODUCTS, HOSPITAL_ARTICLES, REQUIREMENTS } from './mockData'
-import type { Assessment, CatalogProduct, SupplierQuestion } from './types'
+import { useHashView } from './useHashView'
+import { CATALOG_PRODUCTS, HOSPITAL_ARTICLES } from './mockData'
+import type { Assessment, SupplierQuestion } from './types'
 
 const { Title, Text } = Typography
 
-const assessProduct = (product: CatalogProduct) => assess(REQUIREMENTS[product.hospitalArticleId], product)
+/** Initial run: assess every article against its candidates. */
+const initialAssessments = (): Record<string, Assessment> =>
+  Object.fromEntries(
+    HOSPITAL_ARTICLES.flatMap((article) =>
+      findCandidates(article, CATALOG_PRODUCTS).map((p) => [assessmentKey(article.id, p.id), assess(article, p)]),
+    ),
+  )
 
 export default function App() {
   const { t, language, setLanguage, themeMode, setThemeMode } = useSettings()
   const { message } = AntdApp.useApp()
   const { token } = theme.useToken()
 
-  const [view, setView] = useState<View>(View.Hospital)
+  const [view, setView] = useHashView()
   const [selectedId, setSelectedId] = useState('3')
   const [products, setProducts] = useState(CATALOG_PRODUCTS)
-  const [assessments, setAssessments] = useState<Record<string, Assessment>>(() =>
-    Object.fromEntries(CATALOG_PRODUCTS.map((p) => [p.id, assessProduct(p)])),
-  )
+  const [assessments, setAssessments] = useState(initialAssessments)
   const [questions, setQuestions] = useState<SupplierQuestion[]>([])
 
-  const askSupplier = (productId: string) => {
+  const askSupplier = (articleId: string, productId: string) => {
     const product = products.find((p) => p.id === productId)!
-    const missing = assessments[productId].rows.filter(
+    const missing = assessments[assessmentKey(articleId, productId)].rows.filter(
       (r) => r.status === AttributeStatus.Missing && !questions.some((q) => q.productId === productId && q.attribute === r.attribute),
     )
     setQuestions((prev) => [
@@ -48,9 +53,11 @@ export default function App() {
     message.success(t('msg.answerSaved'))
   }
 
-  const reRun = (productId: string) => {
-    const next = assessProduct(products.find((p) => p.id === productId)!)
-    setAssessments((prev) => ({ ...prev, [productId]: { ...next, previousScore: prev[productId].score } }))
+  const reRun = (articleId: string, productId: string) => {
+    const key = assessmentKey(articleId, productId)
+    const article = HOSPITAL_ARTICLES.find((a) => a.id === articleId)!
+    const next = assess(article, products.find((p) => p.id === productId)!)
+    setAssessments((prev) => ({ ...prev, [key]: { ...next, previousScore: prev[key].score } }))
   }
 
   return (

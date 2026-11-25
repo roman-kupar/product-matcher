@@ -27,8 +27,8 @@ interface Props {
 }
 
 export function CandidateCard({ product, assessment, questions, onAskSupplier, onReRun }: Props) {
-  const { t } = useSettings()
-  const { verdict, score, previousScore, rows } = assessment
+  const { t, language } = useSettings()
+  const { verdict, score, previousScore, rows, assessedAt } = assessment
   const missing = rows.filter((r) => r.status === AttributeStatus.Missing).map((r) => r.attribute)
   const unasked = missing.filter((a) => !questions.some((q) => q.attribute === a))
   const open = questions.filter((q) => q.answer === undefined).length
@@ -92,7 +92,8 @@ export function CandidateCard({ product, assessment, questions, onAskSupplier, o
                     ]}
                   />
                   <Text type="secondary" style={{ fontSize: 12 }}>
-                    {t('candidate.source', { articleNo: product.articleNo, source: product.source })}
+                    {t('candidate.source', { articleNo: product.articleNo, source: product.source })} ·{' '}
+                    {t('candidate.assessedAt', { time: new Date(assessedAt).toLocaleString(language) })}
                   </Text>
                 </>
               ),

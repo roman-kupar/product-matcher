@@ -1,9 +1,10 @@
-import type { AttributeKey, AttributeStatus, Verdict } from './enums'
+import type { AttributeKey, AttributeStatus, Category, Verdict } from './enums'
 
 /** A row of the hospital's article master data (sample-challenge-v01.xlsx). */
 export interface HospitalArticle {
   id: string
   name: string
+  category: Category
   brand: string
   articleNo: string
   annualQuantity: number
@@ -22,7 +23,7 @@ export type Attributes = Partial<Record<AttributeKey, string | null>>
 /** A product from a supplier catalog (product_catalog_*.pdf). */
 export interface CatalogProduct {
   id: string
-  hospitalArticleId: string
+  category: Category
   supplier: string
   name: string
   articleNo: string
@@ -34,6 +35,8 @@ export interface Assessment {
   verdict: Verdict
   score: number
   previousScore?: number
+  /** ISO timestamp, so changes between runs are traceable. */
+  assessedAt: string
   rows: { attribute: AttributeKey; required: string; offered: string | null; status: AttributeStatus }[]
 }
 

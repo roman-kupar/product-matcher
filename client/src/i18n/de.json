@@ -5,7 +5,6 @@
   "view.supplier": "Lieferant ({count})",
   "theme.dark": "Dunkel",
   "theme.light": "Hell",
-
   "article.articleNo": "Art.-Nr. {value}",
   "article.details": "Details",
   "article.orderUnit": "Bestellmengeneinheit",
@@ -15,14 +14,12 @@
   "article.mdrClass": "MDR-Klasse",
   "article.targetPrice": "Netto-Zielpreis",
   "article.noCandidates": "Keine passenden Produkte in den Lieferantenkatalogen",
-
   "verdict.EQUIVALENT": "Gleichwertig",
   "verdict.NEEDS_INFO": "Infos fehlen",
   "verdict.NOT_EQUIVALENT": "Nicht gleichwertig",
   "status.MATCH": "Übereinstimmung",
   "status.MISMATCH": "Abweichung",
   "status.MISSING": "Fehlt",
-
   "candidate.missing": "Fehlende Daten: {attributes}",
   "candidate.ask": "Lieferant fragen ({count})",
   "candidate.waiting": "Warte auf Lieferant ({count})",
@@ -33,19 +30,31 @@
   "candidate.colHospital": "Spital",
   "candidate.colSupplier": "Lieferant",
   "candidate.source": "Art.-Nr. {articleNo} · Quelle: {source}",
-
-  "supplier.empty": "Keine offenen Fragen. Fragen Sie zuerst in der Spitalansicht einen Lieferanten an.",
+  "supplier.empty": "Keine offenen Fragen für diesen Lieferanten.",
   "supplier.question": "Was ist der Wert für „{attribute}“ bei {product} (Art.-Nr. {articleNo})?",
   "supplier.submit": "Absenden",
-
   "msg.questionsSent": "{count} Frage(n) an {supplier} gesendet",
   "msg.answerSaved": "Antwort im Lieferantenkatalog gespeichert",
-
   "attr.volume": "Volumen",
   "attr.connector": "Anschluss",
   "attr.sterile": "Steril",
   "attr.packSize": "Packungsgrösse",
   "attr.mdrClass": "MDR-Klasse",
   "attr.size": "Grösse (Ø × Länge)",
-  "attr.gauge": "Gauge"
+  "attr.gauge": "Gauge",
+  "articleStatus.EQUIVALENT_AVAILABLE": "Gleichwertig",
+  "articleStatus.NEEDS_INFO": "Infos fehlen",
+  "articleStatus.NO_EQUIVALENT": "Kein Äquivalent",
+  "articleStatus.NO_CANDIDATES": "Keine Kandidaten",
+  "candidate.assessedAt": "Bewertet {time}",
+  "supplier.tab": "{supplier} ({count})",
+  "category.gloves": "Handschuhe",
+  "category.woundCare": "Wundversorgung",
+  "category.syringe": "Spritze",
+  "category.infusionSet": "Infusionsbesteck",
+  "category.surgicalMask": "OP-Maske",
+  "category.needle": "Kanüle",
+  "category.disinfectant": "Desinfektion",
+  "category.specimenContainer": "Probenbehälter",
+  "category.plaster": "Pflaster"
 }

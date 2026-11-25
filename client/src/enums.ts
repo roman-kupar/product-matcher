@@ -5,8 +5,8 @@
  */
 
 export const View = {
-  Hospital: 'HOSPITAL',
-  Supplier: 'SUPPLIER',
+  Hospital: 'hospital',
+  Supplier: 'supplier',
 } as const
 export type View = (typeof View)[keyof typeof View]
 
@@ -35,3 +35,26 @@ export const AttributeKey = {
   Gauge: 'gauge',
 } as const
 export type AttributeKey = (typeof AttributeKey)[keyof typeof AttributeKey]
+
+/** Product category. Candidates are matched by category; each category defines its own attribute list. */
+export const Category = {
+  Gloves: 'gloves',
+  WoundCare: 'woundCare',
+  Syringe: 'syringe',
+  InfusionSet: 'infusionSet',
+  SurgicalMask: 'surgicalMask',
+  Needle: 'needle',
+  Disinfectant: 'disinfectant',
+  SpecimenContainer: 'specimenContainer',
+  Plaster: 'plaster',
+} as const
+export type Category = (typeof Category)[keyof typeof Category]
+
+/** Overall result for a hospital article, derived from its candidates' verdicts (never stored). */
+export const ArticleStatus = {
+  EquivalentAvailable: 'EQUIVALENT_AVAILABLE',
+  NeedsInfo: 'NEEDS_INFO',
+  NoEquivalent: 'NO_EQUIVALENT',
+  NoCandidates: 'NO_CANDIDATES',
+} as const
+export type ArticleStatus = (typeof ArticleStatus)[keyof typeof ArticleStatus]

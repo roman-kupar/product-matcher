@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button, Card, Empty, Input, Space, Typography } from 'antd'
+import { Button, Card, Empty, Input, Segmented, Space, Typography } from 'antd'
 import { useSettings } from '../i18n/settings'
 import type { CatalogProduct, SupplierQuestion } from '../types'
 
@@ -11,18 +11,24 @@ interface Props {
   onAnswer: (questionId: string, answer: string) => void
 }
 
-/** The supplier's inbox: answer open questions; answers are written into the supplier's catalog. */
+/** The supplier's inbox: each supplier sees only questions about its own products; answers go into its catalog. */
 export function SupplierView({ questions, products, onAnswer }: Props) {
   const { t } = useSettings()
+  const suppliers = [...new Set(products.map((p) => p.supplier))]
+  const [supplier, setSupplier] = useState(suppliers[0])
   const [drafts, setDrafts] = useState<Record<string, string>>({})
-  const open = questions.filter((q) => q.answer === undefined)
-
-  if (open.length === 0) {
-    return <Empty description={t('supplier.empty')} />
-  }
+  const openFor = (name: string) =>
+    questions.filter((q) => q.answer === undefined && products.find((p) => p.id === q.productId)?.supplier === name)
+  const open = openFor(supplier)
 
   return (
     <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
+      <Segmented
+        value={supplier}
+        onChange={setSupplier}
+        options={suppliers.map((name) => ({ value: name, label: t('supplier.tab', { supplier: name, count: openFor(name).length }) }))}
+      />
+      {open.length === 0 && <Empty description={t('supplier.empty')} />}
       {open.map((q) => {
         const product = products.find((p) => p.id === q.productId)
         const draft = drafts[q.id]?.trim() ?? ''
