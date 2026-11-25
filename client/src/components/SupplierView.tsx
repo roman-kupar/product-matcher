@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useEffectEvent, useState } from 'react'
 import { App as AntdApp, Button, Card, Empty, Input, Segmented, Space, Typography } from 'antd'
 import { api } from '../api'
 import { useSettings } from '../i18n/settings'
@@ -23,9 +23,11 @@ export function SupplierView({ suppliers, version, onAnswered, onError }: Props)
   const [drafts, setDrafts] = useState<Record<string, string>>({})
   const supplier = selected ?? suppliers[0]?.name
 
+  const onLoadError = useEffectEvent(onError)
+
   useEffect(() => {
-    if (supplier) api.questions(supplier).then(setQuestions).catch(onError)
-  }, [supplier, version, onError])
+    if (supplier) api.questions(supplier).then(setQuestions).catch(onLoadError)
+  }, [supplier, version])
 
   const submit = async (question: OpenQuestion) => {
     if (!supplier) return

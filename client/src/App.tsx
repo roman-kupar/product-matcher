@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useEffectEvent, useState } from 'react'
 import { App as AntdApp, Segmented, Space, Typography, theme } from 'antd'
 import { api } from './api'
 import { HospitalView } from './components/HospitalView'
@@ -27,10 +27,9 @@ export default function App() {
   const [version, setVersion] = useState(0)
   const reload = () => setVersion((v) => v + 1)
 
-  const showError = useCallback(
-    (error: unknown) => message.error(error instanceof Error ? error.message : String(error)),
-    [message],
-  )
+  const showError = (error: unknown) => message.error(error instanceof Error ? error.message : String(error))
+  // Effect events are not dependencies, so showing an error can never re-trigger a fetch.
+  const onLoadError = useEffectEvent(showError)
 
   useEffect(() => {
     Promise.all([api.articles(), api.suppliers()])
@@ -38,12 +37,12 @@ export default function App() {
         setArticles(a)
         setSuppliers(s)
       })
-      .catch(showError)
-  }, [version, showError])
+      .catch(onLoadError)
+  }, [version])
 
   useEffect(() => {
-    api.article(selectedId).then(setDetail).catch(showError)
-  }, [selectedId, version, showError])
+    api.article(selectedId).then(setDetail).catch(onLoadError)
+  }, [selectedId, version])
 
   const runAssessment = async (articleId: string, productId: string) => {
     setRunningId(productId)
