@@ -3,8 +3,8 @@
   "app.subtitle": "Find equivalent supplier products and fill in missing data",
   "view.hospital": "Hospital",
   "view.supplier": "Supplier ({count})",
-  "settings.dark": "Dark",
-  "settings.light": "Light",
+  "theme.dark": "Dark",
+  "theme.light": "Light",
 
   "article.articleNo": "Art.-No. {value}",
   "article.details": "Details",

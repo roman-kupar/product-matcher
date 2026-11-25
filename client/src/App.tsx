@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { App as AntdApp, Segmented, Space, Typography, theme } from 'antd'
-import { MoonOutlined, SunOutlined } from '@ant-design/icons'
 import { HospitalView } from './components/HospitalView'
 import { SupplierView } from './components/SupplierView'
 import { assess } from './assess'
-import { useSettings, type Lang } from './i18n/settings'
+import { AttributeStatus, View } from './enums'
+import { LANGUAGES, type Language } from './i18n/languages'
+import { useSettings } from './i18n/settings'
+import { THEMES, type ThemeMode } from './theme/themes'
 import { CATALOG_PRODUCTS, HOSPITAL_ARTICLES, REQUIREMENTS } from './mockData'
 import type { Assessment, CatalogProduct, SupplierQuestion } from './types'
 
@@ -13,11 +15,11 @@ const { Title, Text } = Typography
 const assessProduct = (product: CatalogProduct) => assess(REQUIREMENTS[product.hospitalArticleId], product)
 
 export default function App() {
-  const { t, lang, setLang, dark, setDark } = useSettings()
+  const { t, language, setLanguage, themeMode, setThemeMode } = useSettings()
   const { message } = AntdApp.useApp()
   const { token } = theme.useToken()
 
-  const [view, setView] = useState<'HOSPITAL' | 'SUPPLIER'>('HOSPITAL')
+  const [view, setView] = useState<View>(View.Hospital)
   const [selectedId, setSelectedId] = useState('3')
   const [products, setProducts] = useState(CATALOG_PRODUCTS)
   const [assessments, setAssessments] = useState<Record<string, Assessment>>(() =>
@@ -28,7 +30,7 @@ export default function App() {
   const askSupplier = (productId: string) => {
     const product = products.find((p) => p.id === productId)!
     const missing = assessments[productId].rows.filter(
-      (r) => r.status === 'MISSING' && !questions.some((q) => q.productId === productId && q.attribute === r.attribute),
+      (r) => r.status === AttributeStatus.Missing && !questions.some((q) => q.productId === productId && q.attribute === r.attribute),
     )
     setQuestions((prev) => [
       ...prev,
@@ -64,30 +66,28 @@ export default function App() {
               value={view}
               onChange={setView}
               options={[
-                { label: t('view.hospital'), value: 'HOSPITAL' },
-                { label: t('view.supplier', { count: questions.filter((q) => q.answer === undefined).length }), value: 'SUPPLIER' },
+                { label: t('view.hospital'), value: View.Hospital },
+                { label: t('view.supplier', { count: questions.filter((q) => q.answer === undefined).length }), value: View.Supplier },
               ]}
             />
-            <Segmented<Lang>
-              value={lang}
-              onChange={setLang}
-              options={[
-                { label: 'EN', value: 'en' },
-                { label: 'DE', value: 'de' },
-              ]}
+            <Segmented<Language>
+              value={language}
+              onChange={setLanguage}
+              options={(Object.keys(LANGUAGES) as Language[]).map((value) => ({ value, label: LANGUAGES[value].label }))}
             />
-            <Segmented
-              value={dark ? 'dark' : 'light'}
-              onChange={(v) => setDark(v === 'dark')}
-              options={[
-                { value: 'light', icon: <SunOutlined />, title: t('settings.light') },
-                { value: 'dark', icon: <MoonOutlined />, title: t('settings.dark') },
-              ]}
+            <Segmented<ThemeMode>
+              value={themeMode}
+              onChange={setThemeMode}
+              options={(Object.keys(THEMES) as ThemeMode[]).map((value) => ({
+                value,
+                icon: THEMES[value].icon,
+                title: t(`theme.${value}`),
+              }))}
             />
           </Space>
         </div>
 
-        {view === 'HOSPITAL' ? (
+        {view === View.Hospital ? (
           <HospitalView
             articles={HOSPITAL_ARTICLES}
             selectedId={selectedId}

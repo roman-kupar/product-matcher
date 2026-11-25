@@ -3,8 +3,8 @@
   "app.subtitle": "Gleichwertige Lieferantenprodukte finden und fehlende Daten ergänzen",
   "view.hospital": "Spital",
   "view.supplier": "Lieferant ({count})",
-  "settings.dark": "Dunkel",
-  "settings.light": "Hell",
+  "theme.dark": "Dunkel",
+  "theme.light": "Hell",
 
   "article.articleNo": "Art.-Nr. {value}",
   "article.details": "Details",

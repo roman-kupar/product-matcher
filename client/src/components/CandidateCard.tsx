@@ -1,12 +1,22 @@
 import { Button, Card, Collapse, Space, Table, Tag, Typography } from 'antd'
 import { ReloadOutlined, SendOutlined } from '@ant-design/icons'
 import { useSettings } from '../i18n/settings'
-import type { Assessment, AttributeKey, AttributeStatus, CatalogProduct, SupplierQuestion, Verdict } from '../types'
+import { AttributeStatus, Verdict, type AttributeKey } from '../enums'
+import type { Assessment, CatalogProduct, SupplierQuestion } from '../types'
 
 const { Text } = Typography
 
-const VERDICT_COLOR: Record<Verdict, string> = { EQUIVALENT: 'success', NEEDS_INFO: 'warning', NOT_EQUIVALENT: 'error' }
-const STATUS_COLOR: Record<AttributeStatus, string> = { MATCH: 'success', MISMATCH: 'error', MISSING: 'warning' }
+const VERDICT_COLOR: Record<Verdict, string> = {
+  [Verdict.Equivalent]: 'success',
+  [Verdict.NeedsInfo]: 'warning',
+  [Verdict.NotEquivalent]: 'error',
+}
+
+const STATUS_COLOR: Record<AttributeStatus, string> = {
+  [AttributeStatus.Match]: 'success',
+  [AttributeStatus.Mismatch]: 'error',
+  [AttributeStatus.Missing]: 'warning',
+}
 
 interface Props {
   product: CatalogProduct
@@ -19,7 +29,7 @@ interface Props {
 export function CandidateCard({ product, assessment, questions, onAskSupplier, onReRun }: Props) {
   const { t } = useSettings()
   const { verdict, score, previousScore, rows } = assessment
-  const missing = rows.filter((r) => r.status === 'MISSING').map((r) => r.attribute)
+  const missing = rows.filter((r) => r.status === AttributeStatus.Missing).map((r) => r.attribute)
   const unasked = missing.filter((a) => !questions.some((q) => q.attribute === a))
   const open = questions.filter((q) => q.answer === undefined).length
   const answered = questions.filter((q) => q.answer !== undefined && missing.includes(q.attribute)).length

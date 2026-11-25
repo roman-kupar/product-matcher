@@ -1,3 +1,5 @@
+import type { AttributeKey, AttributeStatus, Verdict } from './enums'
+
 /** A row of the hospital's article master data (sample-challenge-v01.xlsx). */
 export interface HospitalArticle {
   id: string
@@ -14,8 +16,6 @@ export interface HospitalArticle {
   currency: string
 }
 
-export type AttributeKey = 'volume' | 'connector' | 'sterile' | 'packSize' | 'mdrClass' | 'size' | 'gauge'
-
 /** Attribute -> value. `null` means the source does not state it. */
 export type Attributes = Partial<Record<AttributeKey, string | null>>
 
@@ -29,9 +29,6 @@ export interface CatalogProduct {
   source: string
   attributes: Attributes
 }
-
-export type AttributeStatus = 'MATCH' | 'MISMATCH' | 'MISSING'
-export type Verdict = 'EQUIVALENT' | 'NEEDS_INFO' | 'NOT_EQUIVALENT'
 
 export interface Assessment {
   verdict: Verdict

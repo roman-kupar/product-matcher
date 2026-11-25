@@ -1,51 +1,45 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import type React from 'react'
-import { ConfigProvider, App as AntdApp, theme } from 'antd'
-import deDE from 'antd/locale/de_DE'
-import enUS from 'antd/locale/en_US'
-import en from './en.json'
-import de from './de.json'
-
-export type Lang = 'en' | 'de'
-export type TranslationKey = keyof typeof en
-
-const MESSAGES: Record<Lang, Record<TranslationKey, string>> = { en, de }
+import { ConfigProvider, App as AntdApp } from 'antd'
+import { DEFAULT_LANGUAGE, LANGUAGES, type Language, type TranslationKey } from './languages'
+import { DEFAULT_THEME, THEMES, type ThemeMode } from '../theme/themes'
 
 interface Settings {
-  lang: Lang
-  setLang: (lang: Lang) => void
-  dark: boolean
-  setDark: (dark: boolean) => void
+  language: Language
+  setLanguage: (language: Language) => void
+  themeMode: ThemeMode
+  setThemeMode: (mode: ThemeMode) => void
   /** Looks up a text in the current language and fills `{placeholders}`. */
   t: (key: TranslationKey, params?: Record<string, string | number>) => string
 }
 
 const SettingsContext = createContext<Settings | null>(null)
 
-function useStored<T extends string>(key: string, fallback: T): [T, (value: T) => void] {
-  const [value, setValue] = useState<T>(() => (localStorage.getItem(key) as T | null) ?? fallback)
+/** State persisted in localStorage; falls back to the default if the stored value is unknown. */
+function useStored<T extends string>(key: string, allowed: Record<T, unknown>, fallback: T): [T, (value: T) => void] {
+  const [value, setValue] = useState<T>(() => {
+    const stored = localStorage.getItem(key)
+    return stored !== null && stored in allowed ? (stored as T) : fallback
+  })
   useEffect(() => localStorage.setItem(key, value), [key, value])
   return [value, setValue]
 }
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
-  const [lang, setLang] = useStored<Lang>('lang', 'en')
-  const [mode, setMode] = useStored<'light' | 'dark'>('theme', 'light')
-  const dark = mode === 'dark'
+  const [language, setLanguage] = useStored<Language>('language', LANGUAGES, DEFAULT_LANGUAGE)
+  const [themeMode, setThemeMode] = useStored<ThemeMode>('theme', THEMES, DEFAULT_THEME)
+  const { messages, antdLocale } = LANGUAGES[language]
 
   const t: Settings['t'] = (key, params = {}) =>
-    MESSAGES[lang][key].replace(/\{(\w+)\}/g, (_, name: string) => String(params[name] ?? `{${name}}`))
+    messages[key].replace(/\{(\w+)\}/g, (_, name: string) => String(params[name] ?? `{${name}}`))
 
   useEffect(() => {
-    document.documentElement.lang = lang
-  }, [lang])
+    document.documentElement.lang = language
+  }, [language])
 
   return (
-    <SettingsContext.Provider value={{ lang, setLang, dark, setDark: (d) => setMode(d ? 'dark' : 'light'), t }}>
-      <ConfigProvider
-        locale={lang === 'de' ? deDE : enUS}
-        theme={{ algorithm: dark ? theme.darkAlgorithm : theme.defaultAlgorithm, token: { borderRadius: 8 } }}
-      >
+    <SettingsContext.Provider value={{ language, setLanguage, themeMode, setThemeMode, t }}>
+      <ConfigProvider locale={antdLocale} theme={THEMES[themeMode].config}>
         <AntdApp>{children}</AntdApp>
       </ConfigProvider>
     </SettingsContext.Provider>
