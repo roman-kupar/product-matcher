@@ -113,8 +113,14 @@ function AssessmentDetails({ assessment, source }: { assessment: Assessment; sou
                   },
                   {
                     title: t('candidate.colReasoning'),
-                    dataIndex: 'reasoning',
-                    render: (r?: Record<string, string>) => <Text type="secondary">{r?.[language] ?? '—'}</Text>,
+                    key: 'reasoning',
+                    // Rows without LLM reasoning were decided in code: identical value or no value.
+                    render: (_, row) => (
+                      <Text type="secondary">
+                        {row.reasoning?.[language] ??
+                          t(row.status === AttributeStatus.Missing ? 'candidate.notStated' : 'candidate.identical')}
+                      </Text>
+                    ),
                   },
                 ]}
               />

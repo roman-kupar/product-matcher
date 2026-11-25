@@ -1,7 +1,7 @@
 {
   "app.title": "Article Enricher",
   "app.subtitle": "Gleichwertige Lieferantenprodukte finden und fehlende Daten ergänzen",
-  "view.hospital": "Spital",
+  "view.hospital": "Krankenhaus",
   "view.supplier": "Lieferant ({count})",
   "theme.dark": "Dunkel",
   "theme.light": "Hell",
@@ -27,7 +27,7 @@
   "candidate.reRun": "Neu bewerten",
   "candidate.details": "Details",
   "candidate.colAttribute": "Merkmal",
-  "candidate.colHospital": "Spital",
+  "candidate.colHospital": "Krankenhaus",
   "candidate.colSupplier": "Lieferant",
   "candidate.source": "Art.-Nr. {articleNo} · Quelle: {source}",
   "supplier.empty": "Keine offenen Fragen für diesen Lieferanten.",
@@ -60,5 +60,7 @@
   "articleStatus.NOT_ASSESSED": "Nicht bewertet",
   "candidate.notAssessed": "Nicht bewertet",
   "candidate.run": "Bewerten",
-  "candidate.colReasoning": "LLM-Begründung"
+  "candidate.colReasoning": "LLM-Begründung",
+  "candidate.identical": "Identische Werte (kein LLM nötig)",
+  "candidate.notStated": "Vom Lieferanten nicht angegeben"
 }

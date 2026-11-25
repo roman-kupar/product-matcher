@@ -60,5 +60,7 @@
   "articleStatus.NOT_ASSESSED": "Not assessed",
   "candidate.notAssessed": "Not assessed",
   "candidate.run": "Run assessment",
-  "candidate.colReasoning": "LLM reasoning"
+  "candidate.colReasoning": "LLM reasoning",
+  "candidate.identical": "Identical values (no LLM needed)",
+  "candidate.notStated": "Not stated by the supplier"
 }
