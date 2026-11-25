@@ -8,8 +8,8 @@
 
 - Repository: `product-matcher` (Monorepo)
 - Structure:
-  - `client/`: Frontend React 19 UI with Vite and TypeScript
-  - `service/`: Backend Node.js service with TypeScript (ESM)
+  - `client/`: React 19 UI with Vite and TypeScript
+  - `service/`: Node.js service with TypeScript (ESM)
 - Package Manager: `npm` (Workspaces enabled)
 
 ---
@@ -51,14 +51,14 @@ Agents must strictly adhere to the following negative constraints. Violation of 
 | Scope | Task | Command | Description |
 | :--- | :--- | :--- | :--- |
 | **All** | Dev | `npm run dev` | Start all workspace dev servers |
-| **All** | Build | `npm run build` | Build all workspaces (`webclient` & `service`) |
+| **All** | Build | `npm run build` | Build all workspaces (`client` & `service`) |
 | **All** | Lint | `npm run lint` | Lint all workspaces |
 | **client** | Dev | `npm run dev:client` | Start Vite dev server for React UI |
-| **client** | Build | `npm run build:client` | Type check and bundle frontend |
-| **client** | Lint | `npm run lint:client` | Run ESLint across frontend |
+| **client** | Build | `npm run build:client` | Type check and bundle the client |
+| **client** | Lint | `npm run lint:client` | Run ESLint across the client |
 | **service** | Dev | `npm run dev:service` | Start Node service in watch mode |
-| **service** | Build | `npm run build:service` | Compile Node TypeScript backend |
-| **service** | Lint | `npm run lint:service` | Type check backend (`tsc --noEmit`) |
+| **service** | Build | `npm run build:service` | Compile the service |
+| **service** | Lint | `npm run lint:service` | Type check the service (`tsc --noEmit`) |
 
 ### 3.2. Verification Before Handoff
 Before marking any task as complete:
