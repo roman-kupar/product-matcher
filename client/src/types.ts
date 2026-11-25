@@ -80,4 +80,6 @@ export interface SupplierSummary {
 
 export interface OpenQuestion extends SupplierQuestion {
   product: CatalogProduct
+  /** Fixed answer options for coded attributes (e.g. MDR class); null means free text. */
+  options: string[] | null
 }

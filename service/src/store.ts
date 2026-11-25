@@ -1,5 +1,5 @@
 import { assess, type Assessment } from './assessment.ts'
-import { CATALOG_PRODUCTS, CATEGORY_ATTRIBUTES, HOSPITAL_ARTICLES, REQUIREMENTS, SEED_QUESTIONS } from './seed.ts'
+import { ATTRIBUTE_OPTIONS, CATALOG_PRODUCTS, CATEGORY_ATTRIBUTES, HOSPITAL_ARTICLES, REQUIREMENTS, SEED_QUESTIONS } from './seed.ts'
 import type { ArticleStatus, CatalogProduct, HospitalArticle, SupplierQuestion } from './types.ts'
 
 export interface StoredAssessment extends Assessment {
@@ -16,6 +16,7 @@ const assessments = new Map<string, StoredAssessment>()
 const questions: SupplierQuestion[] = structuredClone(SEED_QUESTIONS)
 
 export class NotFoundError extends Error {}
+export class BadRequestError extends Error {}
 
 const keyOf = (articleId: string, productId: string) => `${articleId}:${productId}`
 
@@ -74,6 +75,7 @@ export async function runAssessment(articleId: string, productId: string): Promi
       attributes: Object.fromEntries((CATEGORY_ATTRIBUTES[article.category] ?? []).map((a) => [a, requirements[a] ?? null])),
     },
     product: { name: product.name, supplier: product.supplier, attributes: product.attributes },
+    exactAttributes: Object.keys(ATTRIBUTE_OPTIONS),
   })
 
   const previous = assessments.get(keyOf(articleId, productId))
@@ -109,7 +111,7 @@ export function supplierQuestions(supplier: string) {
     .filter((q) => q.answer === undefined)
     .flatMap((q) => {
       const product = products.find((p) => p.id === q.productId && p.supplier === supplier)
-      return product ? [{ ...q, product }] : []
+      return product ? [{ ...q, product, options: ATTRIBUTE_OPTIONS[q.attribute] ?? null }] : []
     })
 }
 
@@ -118,6 +120,8 @@ export function answerQuestion(supplier: string, questionId: string, answer: str
   const question = questions.find((q) => q.id === questionId)
   const product = products.find((p) => p.id === question?.productId && p.supplier === supplier)
   if (!question || !product) throw new NotFoundError(`Question ${questionId} not found for ${supplier}`)
+  const options = ATTRIBUTE_OPTIONS[question.attribute]
+  if (options && !options.includes(answer)) throw new BadRequestError(`Answer must be one of: ${options.join(', ')}`)
 
   question.answer = answer
   product.attributes[question.attribute] = answer

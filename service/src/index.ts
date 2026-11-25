@@ -1,6 +1,7 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
 import { config } from './config.ts'
 import {
+  BadRequestError,
   NotFoundError,
   answerQuestion,
   askSupplier,
@@ -10,8 +11,6 @@ import {
   runAssessment,
   supplierQuestions,
 } from './store.ts'
-
-class BadRequestError extends Error {}
 
 type Handler = (params: string[], body: unknown) => unknown
 

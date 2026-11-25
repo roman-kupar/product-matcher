@@ -10,6 +10,8 @@ type Values = Record<string, string | null>
 export interface AssessmentInput {
   article: { name: string; attributes: Values }
   product: { name: string; supplier: string; attributes: Values }
+  /** Attributes with a fixed code list (e.g. MDR class): compared exactly, never sent to the LLM. */
+  exactAttributes?: string[]
 }
 
 export interface AssessmentRow {
@@ -59,7 +61,8 @@ const JUDGEMENT_SCHEMA = {
 const normalize = (value: string) => value.trim().replace(/\s+/g, ' ').toLowerCase()
 
 /**
- * Clear cases are decided in code: no value -> MISSING, identical value -> MATCH.
+ * Clear cases are decided in code: no value -> MISSING, identical value -> MATCH,
+ * coded attribute with a different value -> MISMATCH.
  * Every other attribute is judged by the LLM in its own call (all calls run in parallel).
  */
 export async function assess(input: AssessmentInput): Promise<Assessment> {
@@ -68,6 +71,7 @@ export async function assess(input: AssessmentInput): Promise<Assessment> {
       const offered = input.product.attributes[attribute] ?? null
       if (offered === null) return { attribute, required, offered, status: 'MISSING' }
       if (required === null || normalize(required) === normalize(offered)) return { attribute, required, offered, status: 'MATCH' }
+      if (input.exactAttributes?.includes(attribute)) return { attribute, required, offered, status: 'MISMATCH' }
       return { attribute, required, offered, ...(await judge(attribute, required, offered)) }
     }),
   )

@@ -17,6 +17,14 @@ export const HOSPITAL_ARTICLES: HospitalArticle[] = [
 ]
 
 /** Fixed attribute list per category: what matters for equivalence. Manufacturer is deliberately not part of it. */
+/**
+ * Coded attributes: answers must be one of these values, and they are compared exactly in code (never by the LLM).
+ * To make another attribute structured, add it here.
+ */
+export const ATTRIBUTE_OPTIONS: Record<string, string[]> = {
+  mdrClass: ['I', 'IIa', 'IIb', 'III'],
+}
+
 export const CATEGORY_ATTRIBUTES: Record<string, string[]> = {
   syringe: ['volume', 'connector', 'sterile', 'packSize', 'mdrClass'],
   needle: ['size', 'gauge', 'sterile', 'packSize', 'mdrClass'],

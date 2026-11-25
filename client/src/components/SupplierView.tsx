@@ -1,5 +1,5 @@
 import { useEffect, useEffectEvent, useState } from 'react'
-import { App as AntdApp, Button, Card, Empty, Input, Segmented, Space, Typography } from 'antd'
+import { App as AntdApp, Button, Card, Empty, Input, Segmented, Select, Space, Typography } from 'antd'
 import { api } from '../api'
 import { useSettings } from '../i18n/settings'
 import type { OpenQuestion, SupplierSummary } from '../types'
@@ -55,12 +55,23 @@ export function SupplierView({ suppliers, version, onAnswered, onError }: Props)
           <Card key={q.id} size="small" title={q.product.name} extra={<Text type="secondary">{q.product.supplier}</Text>}>
             <Text>{t('supplier.question', { attribute, product: q.product.name, articleNo: q.product.articleNo })}</Text>
             <Space.Compact style={{ width: '100%', marginTop: 8 }}>
-              <Input
-                placeholder={attribute}
-                value={drafts[q.id] ?? ''}
-                onChange={(e) => setDrafts((d) => ({ ...d, [q.id]: e.target.value }))}
-                onPressEnter={() => draft && submit(q)}
-              />
+              {q.options ? (
+                // Coded attribute: only valid values can be chosen, so the answer can be compared exactly.
+                <Select
+                  placeholder={attribute}
+                  value={drafts[q.id]}
+                  onChange={(value: string) => setDrafts((d) => ({ ...d, [q.id]: value }))}
+                  options={q.options.map((o) => ({ value: o, label: o }))}
+                  style={{ width: '100%' }}
+                />
+              ) : (
+                <Input
+                  placeholder={attribute}
+                  value={drafts[q.id] ?? ''}
+                  onChange={(e) => setDrafts((d) => ({ ...d, [q.id]: e.target.value }))}
+                  onPressEnter={() => draft && submit(q)}
+                />
+              )}
               <Button type="primary" disabled={!draft} onClick={() => submit(q)}>
                 {t('supplier.submit')}
               </Button>

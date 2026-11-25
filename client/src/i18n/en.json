@@ -62,5 +62,6 @@
   "candidate.run": "Run assessment",
   "candidate.colReasoning": "LLM reasoning",
   "candidate.identical": "Identical values (no LLM needed)",
-  "candidate.notStated": "Not stated by the supplier"
+  "candidate.notStated": "Not stated by the supplier",
+  "candidate.codeMismatch": "Different code (exact comparison, no LLM)"
 }

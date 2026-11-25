@@ -114,11 +114,17 @@ function AssessmentDetails({ assessment, source }: { assessment: Assessment; sou
                   {
                     title: t('candidate.colReasoning'),
                     key: 'reasoning',
-                    // Rows without LLM reasoning were decided in code: identical value or no value.
+                    // Rows without LLM reasoning were decided in code: no value, identical value, or different code.
                     render: (_, row) => (
                       <Text type="secondary">
                         {row.reasoning?.[language] ??
-                          t(row.status === AttributeStatus.Missing ? 'candidate.notStated' : 'candidate.identical')}
+                          t(
+                            row.status === AttributeStatus.Missing
+                              ? 'candidate.notStated'
+                              : row.status === AttributeStatus.Mismatch
+                                ? 'candidate.codeMismatch'
+                                : 'candidate.identical',
+                          )}
                       </Text>
                     ),
                   },
