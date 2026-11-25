@@ -1,5 +1,8 @@
 #   docker compose up -d --build        then open http://localhost:8080
 # The gateway (with its Postgres) is defined once in litellm/, and reads litellm/.env.
+# Fixed project name, so container and image names don't depend on the folder name.
+name: product-matcher
+
 include:
   - litellm/docker-compose.quickstart.yml
 

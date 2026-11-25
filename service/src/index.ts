@@ -10,7 +10,7 @@ import {
   listSuppliers,
   runAssessment,
   supplierQuestions,
-} from './store.ts'
+} from './data/store.ts'
 
 type Handler = (params: string[], body: unknown) => unknown
 

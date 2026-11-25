@@ -1,5 +1,5 @@
 {
-  "app.title": "Article Enricher",
+  "app.title": "Product Matcher",
   "app.subtitle": "Find equivalent supplier products and fill in missing data",
   "view.hospital": "Hospital",
   "view.supplier": "Supplier ({count})",

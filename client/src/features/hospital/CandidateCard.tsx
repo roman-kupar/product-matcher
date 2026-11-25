@@ -1,8 +1,8 @@
 import { Button, Card, Collapse, Space, Table, Tag, Typography } from 'antd'
 import { ReloadOutlined, RobotOutlined, SendOutlined } from '@ant-design/icons'
-import { useSettings } from '../i18n/settings'
-import { AttributeStatus, Verdict, type AttributeKey } from '../enums'
-import type { Assessment, Candidate } from '../types'
+import { useSettings } from '../../i18n/settings'
+import { AttributeStatus, Verdict, type AttributeKey } from '../../model/enums'
+import type { Assessment, Candidate } from '../../model/types'
 
 const { Text } = Typography
 

@@ -1,8 +1,8 @@
 import { Collapse, Descriptions, Empty, Menu, Space, Spin, Tag, Typography } from 'antd'
 import { CandidateCard } from './CandidateCard'
-import { ArticleStatus } from '../enums'
-import { useSettings } from '../i18n/settings'
-import type { ArticleDetail, ArticleSummary } from '../types'
+import { ArticleStatus } from '../../model/enums'
+import { useSettings } from '../../i18n/settings'
+import type { ArticleDetail, ArticleSummary } from '../../model/types'
 
 const { Title, Text } = Typography
 

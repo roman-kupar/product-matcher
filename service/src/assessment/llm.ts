@@ -1,4 +1,4 @@
-import { config } from './config.ts'
+import { config } from '../config.ts'
 
 interface ChatCompletion {
   choices?: { message?: { content?: string | null } }[]

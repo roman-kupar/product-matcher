@@ -1,6 +1,6 @@
-import { assess, type Assessment } from './assessment.ts'
+import { assess, type Assessment } from '../assessment/assessment.ts'
 import { ATTRIBUTE_OPTIONS, CATALOG_PRODUCTS, CATEGORY_ATTRIBUTES, HOSPITAL_ARTICLES, REQUIREMENTS, SEED_QUESTIONS } from './seed.ts'
-import type { ArticleStatus, CatalogProduct, HospitalArticle, SupplierQuestion } from './types.ts'
+import type { ArticleStatus, CatalogProduct, HospitalArticle, SupplierQuestion } from '../domain/types.ts'
 
 export interface StoredAssessment extends Assessment {
   previousScore?: number

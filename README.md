@@ -1,11 +1,11 @@
-# article-enricher
+# product-matcher
 
 A monorepo containing the frontend web application and backend service.
 
 ## Structure
 
-- [`client/`](./client): Frontend React 19 UI built with Vite and TypeScript.
-- [`service/`](./service): Backend Node.js service built with TypeScript (native ESM).
+- [`client/`](./client): Webclient-side React 19 UI built with Vite and TypeScript.
+- [`service/`](./service): Server-side Node.js service built with TypeScript (native ESM).
 
 ## Getting Started
 

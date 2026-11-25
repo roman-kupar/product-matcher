@@ -1,5 +1,5 @@
 import type { ArticleStatus, AttributeKey, AttributeStatus, Category, Verdict } from './enums'
-import type { Language } from './i18n/languages'
+import type { Language } from '../i18n/languages'
 
 export type LocalizedText = Record<Language, string>
 

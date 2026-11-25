@@ -21,7 +21,7 @@ MASTER_KEY=$(grep -E '^LITELLM_MASTER_KEY=' litellm/.env | cut -d= -f2-)
 RESPONSE=$(curl -sf -m 15 http://localhost:4000/key/generate \
   -H "Authorization: Bearer $MASTER_KEY" \
   -H 'Content-Type: application/json' \
-  -d '{"models":["assessment-model","assessment-model-local"],"key_alias":"article-enricher-service"}') || {
+  -d '{"models":["assessment-model","assessment-model-local"],"key_alias":"product-matcher-service"}') || {
   echo "Gateway request failed. Is it running (docker compose -f litellm/docker-compose.quickstart.yml up -d)?" >&2
   exit 1
 }

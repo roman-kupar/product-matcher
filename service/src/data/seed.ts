@@ -1,6 +1,6 @@
 /* Generated from given product catalogs */
 
-import type { CatalogProduct, HospitalArticle, SupplierQuestion, Values } from './types.ts'
+import type { CatalogProduct, HospitalArticle, SupplierQuestion, Values } from '../domain/types.ts'
 
 // Generated from sample-challenge-v01.xlsx
 export const HOSPITAL_ARTICLES: HospitalArticle[] = [

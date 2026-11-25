@@ -1,4 +1,4 @@
-import type { ArticleDetail, ArticleSummary, Assessment, OpenQuestion, SupplierQuestion, SupplierSummary } from './types'
+import type { ArticleDetail, ArticleSummary, Assessment, OpenQuestion, SupplierQuestion, SupplierSummary } from '../model/types'
 
 /** Thin typed wrappers around the service's REST API (proxied to the service in dev, see vite.config.ts). */
 async function request<T>(method: 'GET' | 'POST', path: string, body?: unknown): Promise<T> {

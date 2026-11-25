@@ -1,6 +1,6 @@
 # Design decisions
 
-This document explains the main choices behind article-enricher, what I traded off, and what I would change with more time. The code is the source of truth. This is the reasoning behind it.
+This document explains the main choices behind product-matcher, what I traded off, and what I would change with more time. The code is the source of truth. This is the reasoning behind it.
 
 ## What the app does
 
@@ -22,7 +22,7 @@ The hospital master data comes from `sample-challenge-v01.xlsx` (10 articles). T
 
 I chose a **one-time preprocessing step** over in-app upload. Extracting from a long product catalog is slow and doesn't need to happen while a buyer waits, and a fixed seed makes the demo reproducible: every reviewer sees the same starting data. Upload can be added later on top of the same data model.
 
-To be transparent: for this version, I prepared the seed (`service/src/seed.ts`) **by hand**, not with a script. Two details matter:
+To be transparent: for this version, I prepared the seed (`service/src/data/seed.ts`) **by hand**, not with a script. Two details matter:
 
 - Catalog values are copied **as written in the PDFs**, for example "BD Luer-Lok™-Ansatz", "Packung zu 100 Stück", "VE 100 / UK 400". I deliberately didn't clean them up, because judging that kind of wording is exactly the LLM's job.
 - The hospital's requirements per attribute (volume 10 ml, Luer-Lock, sterile, pack of 100, MDR class IIa) are what an extraction step would derive from the article name and master data. I wrote them down manually.
@@ -49,7 +49,7 @@ The cost is that someone has to define a list per category. With two categories 
 
 This is the part I spent the most time on. The rule is: **code decides everything that has a clear answer, and the LLM only judges what needs judgement.**
 
-For each attribute in the category's list (`service/src/assessment.ts`):
+For each attribute in the category's list (`service/src/assessment/assessment.ts`):
 
 1. **Supplier value missing →** `MISSING`, decided in code.
 2. **Values identical** (ignoring case and spacing) **→** `MATCH`, decided in code.
@@ -122,7 +122,7 @@ The article list shows each article's derived status. Two of them cover the requ
 
 ## Known limitations
 
-- **The data lives in memory**, so restarting the service resets all assessments and answers. Every access goes through a few functions in `service/src/store.ts`, so moving to Postgres wouldn't touch the routes.
+- **The data lives in memory**, so restarting the service resets all assessments and answers. Every access goes through a few functions in `service/src/data/store.ts`, so moving to Postgres wouldn't touch the routes.
 - **No ingestion script yet;** the seed data was prepared by hand (see above).
 - **No authentication;** the role switch stands in for it.
 - **The score weighs all attributes equally.** In reality some attributes, sterility for example, should be hard requirements. A per-category weighting or "must match" flag would be the next refinement.

@@ -1,15 +1,15 @@
 import { useEffect, useEffectEvent, useState } from 'react'
 import { App as AntdApp, Segmented, Space, Typography, theme } from 'antd'
 import { ExperimentOutlined } from '@ant-design/icons'
-import { api } from './api'
-import { HospitalView } from './components/HospitalView'
-import { SupplierView } from './components/SupplierView'
-import { View } from './enums'
+import { api } from './api/client'
+import { HospitalView } from './features/hospital/HospitalView'
+import { SupplierView } from './features/supplier/SupplierView'
+import { View } from './model/enums'
 import { LANGUAGES, type Language } from './i18n/languages'
 import { useSettings } from './i18n/settings'
 import { THEMES, type ThemeMode } from './theme/themes'
-import type { ArticleDetail, ArticleSummary, SupplierSummary } from './types'
-import { useHashView } from './useHashView'
+import type { ArticleDetail, ArticleSummary, SupplierSummary } from './model/types'
+import { useHashView } from './hooks/useHashView'
 
 const { Title, Text } = Typography
 

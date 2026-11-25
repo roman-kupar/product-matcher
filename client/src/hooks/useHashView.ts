@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { View } from './enums'
+import { View } from '../model/enums'
 
 const parse = (): View => {
   const path = window.location.hash.replace(/^#\//, '')

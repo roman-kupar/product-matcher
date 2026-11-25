@@ -1,8 +1,8 @@
 import { useEffect, useEffectEvent, useState } from 'react'
 import { App as AntdApp, Button, Card, Empty, Input, Segmented, Select, Space, Typography } from 'antd'
-import { api } from '../api'
-import { useSettings } from '../i18n/settings'
-import type { OpenQuestion, SupplierSummary } from '../types'
+import { api } from '../../api/client'
+import { useSettings } from '../../i18n/settings'
+import type { OpenQuestion, SupplierSummary } from '../../model/types'
 
 const { Text } = Typography
 

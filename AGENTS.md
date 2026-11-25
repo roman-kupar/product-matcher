@@ -1,12 +1,12 @@
 # AGENTS.md
 
-> Operational guidelines, strict safety boundaries, and workflow instructions for AI agents working in `article-enricher`.
+> Operational guidelines, strict safety boundaries, and workflow instructions for AI agents working in `product-matcher`.
 
 ---
 
 ## 1. Project Overview
 
-- Repository: `article-enricher` (Monorepo)
+- Repository: `product-matcher` (Monorepo)
 - Structure:
   - `client/`: Frontend React 19 UI with Vite and TypeScript
   - `service/`: Backend Node.js service with TypeScript (ESM)
